@@ -1,0 +1,10 @@
+/Users/willlatter/Library/CloudStorage/OneDrive-UniversityofAdelaide/Year 3/Sem 2/Microcontroller Programming/project/Src/Kobuki_Drivers/kobuki.c:28:6:Kobuki_Read	56	static
+/Users/willlatter/Library/CloudStorage/OneDrive-UniversityofAdelaide/Year 3/Sem 2/Microcontroller Programming/project/Src/Kobuki_Drivers/kobuki.c:63:6:Kobuki_Rotate_Angle_Setpoint	24	static
+/Users/willlatter/Library/CloudStorage/OneDrive-UniversityofAdelaide/Year 3/Sem 2/Microcontroller Programming/project/Src/Kobuki_Drivers/kobuki.c:75:6:Kobuki_Rotate_Angle	32	static
+/Users/willlatter/Library/CloudStorage/OneDrive-UniversityofAdelaide/Year 3/Sem 2/Microcontroller Programming/project/Src/Kobuki_Drivers/kobuki.c:105:6:Kobuki_Drive_Distance_Setpoint	24	static
+/Users/willlatter/Library/CloudStorage/OneDrive-UniversityofAdelaide/Year 3/Sem 2/Microcontroller Programming/project/Src/Kobuki_Drivers/kobuki.c:111:6:Kobuki_Drive_Distance	32	static
+/Users/willlatter/Library/CloudStorage/OneDrive-UniversityofAdelaide/Year 3/Sem 2/Microcontroller Programming/project/Src/Kobuki_Drivers/kobuki.c:142:6:Kobuki_Update_LEDs	24	static
+/Users/willlatter/Library/CloudStorage/OneDrive-UniversityofAdelaide/Year 3/Sem 2/Microcontroller Programming/project/Src/Kobuki_Drivers/kobuki.c:151:6:Kobuki_Tx	24	static
+/Users/willlatter/Library/CloudStorage/OneDrive-UniversityofAdelaide/Year 3/Sem 2/Microcontroller Programming/project/Src/Kobuki_Drivers/kobuki.c:166:9:Kobuki_Rx	40	static
+/Users/willlatter/Library/CloudStorage/OneDrive-UniversityofAdelaide/Year 3/Sem 2/Microcontroller Programming/project/Src/Kobuki_Drivers/kobuki.c:200:6:Kobuki_Drive	24	static
+/Users/willlatter/Library/CloudStorage/OneDrive-UniversityofAdelaide/Year 3/Sem 2/Microcontroller Programming/project/Src/Kobuki_Drivers/kobuki.c:217:6:Kobuki_Rotate	24	static
