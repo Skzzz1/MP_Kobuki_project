@@ -38,10 +38,6 @@
 #define BOLLARD_B_MAX 400
 #define BOLLARD_B_MIN 500
 
-// Logic
-#define NULL 0
-#define TRUE 1
-
 // States
 typedef enum { IDLE, SEARCH, ORIENT, PATHFIND, STORAGE, DEPOSIT } State;
 
@@ -56,6 +52,16 @@ typedef enum {
   END
 } Search_State;
 
+typedef enum {
+  STORAGE_IDLE,
+  STORAGE_ORIENT_A,
+  STORAGE_ORIENT_B,
+  STORAGE_ENTER,
+  STORAGE_END
+} Storage_State;
+
+typedef enum { PATH_A, PATH_B } Path;
+
 volatile bool item_found;        // Y when object is detected in sensor range
 volatile uint16_t item_width;    // to calculate midpoint of object
 volatile bool is_bollard_faced;  // Y when facing bollard centre
@@ -67,10 +73,12 @@ volatile bool path_b_aligned;        // Y if facing bollard A
 volatile Kobuki_Typedef kobuki;
 volatile Object object;
 volatile Kobuki_LED_Enum led_1, led_2;
+volatile Path path;
 
 // States
 volatile State current_state;
 volatile Search_State current_search_state;
+volatile Storage_State current_storage_state;
 
 void idleFSM() {}
 
@@ -112,6 +120,62 @@ void searchFSM() {
       break;
     case (END):
       break;
+  }
+}
+
+void storageFSM() {
+  switch (current_storage_state) {
+    case (STORAGE_IDLE):
+      // Determine path
+      switch (path) {
+        case (PATH_A):
+          current_storage_state = STORAGE_ORIENT_A;
+          Kobuki_Rotate_Angle_Setpoint(kobuki.angle, 135);
+          // might be wrong direction IDK
+          break;
+
+        case (PATH_B):
+          current_storage_state = STORAGE_ORIENT_B;
+          Kobuki_Rotate_Angle_Setpoint(kobuki.angle, 225);
+          // might also be wrong
+          break;
+
+        default:
+          // error
+          break;
+      }
+      break;
+
+    case (STORAGE_ORIENT_A):
+      // rotate CW 135 deg
+      if (kobuki.rotation_complete == false) {
+        Kobuki_Rotate_Angle(kobuki.angle);
+      } else {
+        current_storage_state = STORAGE_ENTER;
+        Kobuki_Drive_Distance_Setpoint(kobuki.distance, 275);
+      }
+      break;
+
+    case (STORAGE_ORIENT_B):
+      // rotate ACW 135 deg
+      if (kobuki.rotation_complete == false) {
+        Kobuki_Rotate_Angle(kobuki.angle);
+      } else {
+        current_storage_state = STORAGE_ENTER;
+        Kobuki_Drive_Distance_Setpoint(kobuki.distance, 275);
+      }
+      break;
+
+    case (STORAGE_ENTER):
+      // drive ~275 mm
+      if (kobuki.distance_complete == false) {
+        Kobuki_Drive_Distance(kobuki.distance);
+      } else {
+        current_storage_state = STORAGE_END;
+      }
+      break;
+    case (STORAGE_END):
+      current_state = DEPOSIT;
   }
 }
 
@@ -161,10 +225,9 @@ int main(void) {
         break;
 
       case SEARCH:
-        if ((kobuki.wheeldrop != NULL) |
-            ((kobuki.bumper + kobuki.cliff) != NULL) |
-            (kobuki.rotation_complete == TRUE) |
-            (kobuki.distance_complete == TRUE)) {
+        if ((kobuki.wheeldrop != 0) | ((kobuki.bumper + kobuki.cliff) != 0) |
+            (kobuki.rotation_complete == true) |
+            (kobuki.distance_complete == true)) {
           Kobuki_Rotate_Angle_Setpoint(kobuki.angle, 90);
         } else if (object.detected == 1) {
           current_state = IDLE;
