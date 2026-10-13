@@ -69,7 +69,7 @@ volatile Object object;
 volatile Kobuki_LED_Enum led_1, led_2;
 
 // States
-// volatile state current_state;
+volatile State current_state;
 volatile Search_State current_search_state;
 
 void idleFSM() {}
@@ -120,7 +120,7 @@ int main(void) {
   UART_Init();
   ADC_Init();
   Ultrasonic_Init();
-  State = IDLE;
+  current_state = IDLE;
   led_1 = OFF;
   led_2 = OFF;
 
@@ -129,28 +129,28 @@ int main(void) {
     Ultrasonic_Detect(&object);
     Kobuki_Update_LEDs(led_1, led_2);
 
-    // // Main FSM
-    // switch (current_state) {
-    //   case (IDLE):
-    //     break;
-    //   case (SEARCH):
-    //     searchFSM();
-    //     break;
-    //   case (ORIENT):
-    //     break;
-    //   case (PATHFIND):
-    //     break;
-    //   case (STORAGE):
-    //     break;
-    //   case (DEPOSIT):
-    //     break;
-    // }
+    // Main FSM
+    switch (current_state) {
+      case (IDLE):
+        break;
+      case (SEARCH):
+        searchFSM();
+        break;
+      case (ORIENT):
+        break;
+      case (PATHFIND):
+        break;
+      case (STORAGE):
+        break;
+      case (DEPOSIT):
+        break;
+    }
 
     // A TEST FSM
-    switch (State) {
+    switch (current_state) {
       case IDLE:
         if (kobuki.button == BUTTON_0_START) {
-          State = SEARCH;
+          current_state = SEARCH;
           led_1 = RED;
           Kobuki_Rotate_Angle_Setpoint(kobuki.angle, 90);
           // Kobuki_Drive_Distance_Setpoint ( kobuki . distance ,100) ;
@@ -167,18 +167,12 @@ int main(void) {
             (kobuki.distance_complete == TRUE)) {
           Kobuki_Rotate_Angle_Setpoint(kobuki.angle, 90);
         } else if (object.detected == 1) {
-          State = IDLE;
+          current_state = IDLE;
           led_1 = YELLOW;
         } else {
           Kobuki_Rotate_Angle(kobuki.angle);
           // Kobuki_Drive_Distance ( kobuki . distance ) ;
         }
-        break;
-      case OBSTACLE:
-        break;
-      case AVOID:
-        break;
-      case OBJECT:
         break;
     }
   }
