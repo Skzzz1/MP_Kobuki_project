@@ -69,6 +69,15 @@ typedef enum {
   PATHFIND_END
 } Pathfind_State;
 
+typedef enum {
+  DEPOSIT_IDLE,
+  DEPOSIT_SCAN,
+  DEPOSIT_ALIGN,
+  DEPOSIT_APPROACH,
+  DEPOSIT_END
+} Deposit_State;
+
+
 typedef enum { PATH_A, PATH_B } Path;
 
 volatile bool item_found;        // Y when object is detected in sensor range
@@ -89,9 +98,11 @@ volatile State current_state;
 volatile Search_State current_search_state;
 volatile Storage_State current_storage_state;
 volatile Pathfind_State current_pathfind_state;
+volatile Deposit_State current_deposit_state;
 
 //State Flags
 volatile bool pathfind_complete = false;
+volatile bool deposit_complete = false;
 
 void idleFSM() {}
 
@@ -193,9 +204,9 @@ void Pathfind_FSM(void){
       } else{
         //continue to drive, stay in this state
         Kobuki_Drive_Distance(kobuki.distance);
-        break:
+        break;
       }
-      break:
+      break;
     
     case (PATHFIND_DRIVE_V):
         if (kobuki.distance_complete){
@@ -223,9 +234,9 @@ void Pathfind_FSM(void){
       } else{
         //continue to drive, stay in this state
         Kobuki_Drive_Distance(kobuki.distance);
-        break:
+        break;
       }
-      break:
+      break;
 
     case (PATHFIND_TURN_ACW):
       if(kobuki.rotation_complete){
@@ -239,7 +250,7 @@ void Pathfind_FSM(void){
         //continue to rotate, stay in this state
         Kobuki_Rotate_Angle(kobuki.angle);
       }
-      break:
+      break;
 
     case (PATHFIND_TURN_CW):
       if(kobuki.rotation_complete){
@@ -253,7 +264,7 @@ void Pathfind_FSM(void){
         //continue to rotate, stay in this state
         Kobuki_Rotate_Angle(kobuki.angle);
       }
-      break:
+      break;
     case (PATHFIND_END):
       //pathfind_complete should trigger a change of state out of this FSM
       if (pathfind_complete!){
@@ -323,6 +334,56 @@ void storageFSM() {
   }
 }
 
+//Deposit FSM 
+//Using stages scan, align and approach to deposit the object
+
+void Deposit_FSM(void){
+  switch (current_deposit_state){
+    case(DEPOSIT_IDLE):
+      current_deposit_state = DEPOSIT_SCAN;
+      break;
+
+    case(DEPOSIT_SCAN):
+      if (item_found!){
+        Scan_FSM();
+        //HAVENT WRITTEN THIS ONE YET, SHARED WITH SEARCH?
+      } else{
+        current_deposit_state = DEPOSIT_ALIGN;
+      }
+      break;
+
+    case(DEPOSIT_ALIGN):
+      if(is_bollard_faced!){
+        Align_FSM();
+        //ALSO SHARED WITH SEARCH? NOT KNOW IF WRITTEN YET
+      } else{
+        current_deposit_state = DEPOSIT_APPROACH;
+        Kobuki_Drive_Distance_Setpoint(kobuki.distance, item.distance);
+        //item.distance, dont know if we have included that yet. sense the distance in this step?
+        Kobuki_Drive_Distance(kobuki.distance);
+      }
+      break;
+
+    case(DEPOSIT_APPROACH):
+      if(kobuki.distance_complete!){
+        Kobuki_Drive_Distance(kobuki.distance);
+        //if the item is not reached yet, continue to approach
+      } else{
+        current_deposit_state = DEPOSIT_END;
+        deposit_complete = true;
+      }
+      break;
+
+    case(DEPOSIT_END):
+      if(deposit_complete!){
+        deposit_complete = true;
+      }
+      break;
+  }
+}
+
+void Deposit_FSM()
+
 int main(void) {
   // Initialize
   UART_Init();
@@ -341,11 +402,14 @@ int main(void) {
     switch (current_state) {
       case (IDLE):
         break;
+
       case (SEARCH):
         searchFSM();
         break;
+
       case (ORIENT):
         break;
+
       case (PATHFIND):
         if(pathfind_complete!){
           Pathfind_FSM();
@@ -353,9 +417,17 @@ int main(void) {
           current_state = STORAGE;
         }
         break;
+
       case (STORAGE):
         break;
+
       case (DEPOSIT):
+        if(deposit_complete!){
+          Deposit_FSM();
+        } else{
+          current_state = IDLE;
+          //end program
+        }
         break;
     }
 
