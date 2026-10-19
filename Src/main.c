@@ -60,6 +60,15 @@ typedef enum {
   STORAGE_END
 } Storage_State;
 
+typedef enum {
+  PATHFIND_IDLE,
+  PATHFIND_DRIVE_H,
+  PATHFIND_DRIVE_V,
+  PATHFIND_TURN_CW,
+  PATHFIND_TURN_ACW, 
+  PATHFIND_END
+} Pathfind_State;
+
 typedef enum { PATH_A, PATH_B } Path;
 
 volatile bool item_found;        // Y when object is detected in sensor range
@@ -79,6 +88,10 @@ volatile Path path;
 volatile State current_state;
 volatile Search_State current_search_state;
 volatile Storage_State current_storage_state;
+volatile Pathfind_State current_pathfind_state;
+
+//State Flags
+volatile bool pathfind_complete = false;
 
 void idleFSM() {}
 
@@ -122,6 +135,137 @@ void searchFSM() {
       break;
   }
 }
+
+//Pathfind FSM
+//According to the path found in SEARCH:
+//Drive horizontal, turn ACW, then drive vertical 
+//OR Drive vertical, turn CW, then drive horizontal 
+
+void Pathfind_FSM(void){
+  switch (current_pathfind_state) {
+    case (PATHFIND_IDLE):
+      switch(path) {
+        case(PATH_A):
+          current_pathfind_state = DRIVE_H;
+          //set distance to 1195 mm
+          //start drive 
+          Kobuki_Drive_Distance_Setpoint(kobuki.distance, 1195);
+          Kobuki_Drive_Distance(kobuki.distance);
+          break;
+
+        case(PATH_B):
+          current_pathfind_state = DRIVE_V;
+          //set distance to 1395 mm
+          //start drive
+          Kobuki_Drive_Distance_Setpoint(kobuki.distance, 1395);
+          Kobuki_Drive_Distance(kobuki.distance);
+          break;
+
+        default:
+          //error
+          break;
+      }
+      break;
+
+    case (PATHFIND_DRIVE_H):
+      if (kobuki.distance_complete){
+        //If the kobuki has driven the distance required
+        switch(path) {
+          case(PATH_A):
+            current_pathfind_state = TURN_ACW;
+            //turn anticlockwise if on Path A
+            //set rotation to -90 degrees 
+            //rotate 
+            Kobuki_Rotate_Angle_Setpoint(kobuki.angle, -90);
+            Kobuki_Rotate_Angle(kobuki.angle);
+            break;
+
+          case(PATH_B):
+            current_pathfind_state = PATHFIND_END;
+            //The path has been navigated
+            pathfind_complete = true;
+            break;
+
+          default:
+            //error
+            break;
+        }
+      } else{
+        //continue to drive, stay in this state
+        Kobuki_Drive_Distance(kobuki.distance);
+        break:
+      }
+      break:
+    
+    case (PATHFIND_DRIVE_V):
+        if (kobuki.distance_complete){
+        //If the kobuki has driven the distance required
+        switch(path) {
+          case(PATH_B):
+            current_pathfind_state = TURN_CW;
+            //turn anticlockwise if on Path A
+            //set rotation to -90 degrees 
+            //rotate 
+            Kobuki_Rotate_Angle_Setpoint(kobuki.angle, 90);
+            Kobuki_Rotate_Angle(kobuki.angle);
+            break;
+
+          case(PATH_A):
+            current_pathfind_state = PATHFIND_END;
+            //The path has been navigated
+            pathfind_complete = true;
+            break;
+
+          default:
+            //error
+            break;
+        }
+      } else{
+        //continue to drive, stay in this state
+        Kobuki_Drive_Distance(kobuki.distance);
+        break:
+      }
+      break:
+
+    case (PATHFIND_TURN_ACW):
+      if(kobuki.rotation_complete){
+        //If kobuki has finished rotating anticlockwise 
+        //Next state is always drive vertical (1395 mm)
+        current_pathfind_state = DRIVE_V;
+        Kobuki_Drive_Distance_Setpoint(kobuki.distance, 1395);
+        Kobuki_Drive_Distance(kobuki.distance);
+
+      } else {
+        //continue to rotate, stay in this state
+        Kobuki_Rotate_Angle(kobuki.angle);
+      }
+      break:
+
+    case (PATHFIND_TURN_CW):
+      if(kobuki.rotation_complete){
+        //If kobuki has finished rotating clockwise 
+        //Next state is always drive horizontal (1195 mm)
+        current_pathfind_state = DRIVE_H;
+        Kobuki_Drive_Distance_Setpoint(kobuki.distance, 1195);
+        Kobuki_Drive_Distance(kobuki.distance);
+
+      } else {
+        //continue to rotate, stay in this state
+        Kobuki_Rotate_Angle(kobuki.angle);
+      }
+      break:
+    case (PATHFIND_END):
+      //pathfind_complete should trigger a change of state out of this FSM
+      if (pathfind_complete!){
+        pathfind_complete = true;
+      }
+      break;
+
+    default:
+      break;
+  }
+}
+
 
 void storageFSM() {
   switch (current_storage_state) {
@@ -203,6 +347,11 @@ int main(void) {
       case (ORIENT):
         break;
       case (PATHFIND):
+        if(pathfind_complete!){
+          Pathfind_FSM();
+        } else{
+          current_state = STORAGE;
+        }
         break;
       case (STORAGE):
         break;
