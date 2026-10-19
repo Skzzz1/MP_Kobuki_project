@@ -94,11 +94,11 @@ volatile Kobuki_LED_Enum led_1, led_2;
 volatile Path path;
 
 // States
-volatile State current_state;
-volatile Search_State current_search_state;
-volatile Storage_State current_storage_state;
-volatile Pathfind_State current_pathfind_state;
-volatile Deposit_State current_deposit_state;
+volatile State current_state = IDLE;
+volatile Search_State current_search_state = SEARCH_IDLE;
+volatile Storage_State current_storage_state = STORAGE_IDLE;
+volatile Pathfind_State current_pathfind_state = PATHFIND_IDLE;
+volatile Deposit_State current_deposit_state = DEPOSIT_IDLE;
 
 //State Flags
 volatile bool pathfind_complete = false;
@@ -382,18 +382,27 @@ void Deposit_FSM(void){
   }
 }
 
-void Timer_Init(void){
-  Clock_Enable(TIM3_BUS);
-  Timer_Init(TIM3, TIM3_IRQn, 47, 19999, true);	        // Configure TIM3 to 20 ms update
-  NVIC_SetPriority(TIM3_IRQn, 1);
+void Timer_Init(TIM_TypeDef *timer, IRQn_Type irq_type, uint16_t psc, uint16_t arr, bool enable_interrupt) {
+  timer->PSC = psc;
+  timer->ARR = arr;
+  if (enable_interrupt) {
+    timer->DIER |= 1<<0; // Turn on interrupts for the Timer
+    NVIC_EnableIRQ(irq_type); // Allow timer to interrupt Cortex processor
+  }
+  // Enable Timer/Counter
+  timer->CR1 |= 1<<0;
 }
+
 
 int main(void) {
   // Initialize
   UART_Init();
   ADC_Init();
   Ultrasonic_Init();
-  Timer_Init();
+  //Timer Init 
+  Clock_Enable(TIM3_BUS);
+  Timer_Init(TIM3, TIM3_IRQn, 47, 19999, true);	        // Configure TIM3 to 20 ms update
+  NVIC_SetPriority(TIM3_IRQn, 1);
 
   current_state = IDLE;
   led_1 = OFF;
