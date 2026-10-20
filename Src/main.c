@@ -39,7 +39,7 @@
 #define BOLLARD_A_MIN 750
 #define BOLLARD_B_MAX 700
 #define BOLLARD_B_MIN 200
-#define SEARCH_SPEED 70  // mm/s, TODO: test this
+#define SEARCH_SPEED 60  // mm/s, TODO: test this
 #define STOP 0           // speed for stopping the kobuki
 
 // States
