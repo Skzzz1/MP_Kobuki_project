@@ -52,7 +52,7 @@ rule CUSTOM_COMMAND
 # Rule for re-running cmake.
 
 rule RERUN_CMAKE
-  command = "/Users/willlatter/Library/Application Support/stm32cube/bundles/cmake/4.3.1+st.1/CMake.app/Contents/bin/cmake" --regenerate-during-build -S"/Users/willlatter/Library/CloudStorage/OneDrive-UniversityofAdelaide/Year 3/Sem 2/Microcontroller Programming/project" -B"/Users/willlatter/Library/CloudStorage/OneDrive-UniversityofAdelaide/Year 3/Sem 2/Microcontroller Programming/project/build/Debug"
+  command = "/Users/willlatter/Library/Application Support/stm32cube/bundles/cmake/4.3.1+st.1/CMake.app/Contents/bin/cmake" --regenerate-during-build -S"/Users/willlatter/Library/CloudStorage/OneDrive-AdelaideUniversity/Year 3/Sem 2/Microcontroller Programming/MP_Kobuki_project" -B"/Users/willlatter/Library/CloudStorage/OneDrive-AdelaideUniversity/Year 3/Sem 2/Microcontroller Programming/MP_Kobuki_project/build/Debug"
   description = Re-running CMake...
   generator = 1
 

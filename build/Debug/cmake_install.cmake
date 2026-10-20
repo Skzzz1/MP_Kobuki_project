@@ -1,4 +1,4 @@
-# Install script for directory: /Users/willlatter/Library/CloudStorage/OneDrive-UniversityofAdelaide/Year 3/Sem 2/Microcontroller Programming/project
+# Install script for directory: /Users/willlatter/Library/CloudStorage/OneDrive-AdelaideUniversity/Year 3/Sem 2/Microcontroller Programming/MP_Kobuki_project
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -40,7 +40,7 @@ endif()
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
 if(CMAKE_INSTALL_LOCAL_ONLY)
-  file(WRITE "/Users/willlatter/Library/CloudStorage/OneDrive-UniversityofAdelaide/Year 3/Sem 2/Microcontroller Programming/project/build/Debug/install_local_manifest.txt"
+  file(WRITE "/Users/willlatter/Library/CloudStorage/OneDrive-AdelaideUniversity/Year 3/Sem 2/Microcontroller Programming/MP_Kobuki_project/build/Debug/install_local_manifest.txt"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
 endif()
 if(CMAKE_INSTALL_COMPONENT)
@@ -56,6 +56,6 @@ else()
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
-  file(WRITE "/Users/willlatter/Library/CloudStorage/OneDrive-UniversityofAdelaide/Year 3/Sem 2/Microcontroller Programming/project/build/Debug/${CMAKE_INSTALL_MANIFEST}"
+  file(WRITE "/Users/willlatter/Library/CloudStorage/OneDrive-AdelaideUniversity/Year 3/Sem 2/Microcontroller Programming/MP_Kobuki_project/build/Debug/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
 endif()
