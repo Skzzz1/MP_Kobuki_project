@@ -239,6 +239,15 @@ CMAKE_TAPI:FILEPATH=CMAKE_TAPI-NOTFOUND
 CMAKE_VERBOSE_MAKEFILE:BOOL=FALSE
 
 //Value Computed by CMake
+MP_Kobuki_project_BINARY_DIR:STATIC=/Users/willlatter/Library/CloudStorage/OneDrive-AdelaideUniversity/Year 3/Sem 2/Microcontroller Programming/MP_Kobuki_project/build/Debug
+
+//Value Computed by CMake
+MP_Kobuki_project_IS_TOP_LEVEL:STATIC=ON
+
+//Value Computed by CMake
+MP_Kobuki_project_SOURCE_DIR:STATIC=/Users/willlatter/Library/CloudStorage/OneDrive-AdelaideUniversity/Year 3/Sem 2/Microcontroller Programming/MP_Kobuki_project
+
+//Value Computed by CMake
 project_BINARY_DIR:STATIC=/Users/willlatter/Library/CloudStorage/OneDrive-AdelaideUniversity/Year 3/Sem 2/Microcontroller Programming/MP_Kobuki_project/build/Debug
 
 //Value Computed by CMake
