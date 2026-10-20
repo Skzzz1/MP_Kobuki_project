@@ -61,14 +61,12 @@ void Kobuki_Read(Kobuki_Typedef* kobuki) {
   kobuki->distance_complete = distance_complete;
 }
 
-void Kobuki_Rotate_Angle_Setpoint(int16_t current_angle_tick,
-                                  int16_t rot_angle_deg) {
+void Kobuki_Rotate_Angle_Setpoint(int16_t current_angle_tick, int16_t rot_angle_deg) {
   volatile int32_t init_angle;
   rotation_complete = 0;
 
   // initial angle
-  init_angle = (int32_t)((double)(current_angle_tick + (int32_t)18000) *
-                         DEG_PER_TICK);  // [ -18000 ,18000] ->[0 -360] deg
+  init_angle = (int32_t)((double)(current_angle_tick + (int32_t)18000) *DEG_PER_TICK);  // [ -18000 ,18000] ->[0 -360] deg
   // setpoint angle
   setpoint_angle_deg = (init_angle + rot_angle_deg + 360) % 360;  // [0 -360]
 }

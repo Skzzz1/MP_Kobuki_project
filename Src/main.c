@@ -32,11 +32,11 @@
 
 // **TBC**
 #define ITEM_WIDTH_THRES 95             // degrees
-#define SEARCH_DIST_MAX 1000             // mm
+#define SEARCH_DIST_MAX 900             // mm
 #define SEARCH_DIST_MIN 200             // mm
 #define SEARCH_CLEAR_CONFIRM_SAMPLES 3  // may change here
-#define BOLLARD_A_MAX 1000
-#define BOLLARD_A_MIN 800
+#define BOLLARD_A_MAX 900
+#define BOLLARD_A_MIN 750
 #define BOLLARD_B_MAX 700
 #define BOLLARD_B_MIN 200
 #define SEARCH_SPEED 70  // mm/s, TODO: test this
@@ -398,12 +398,14 @@ void storageFSM() {
       switch (path) {
         case (PATH_A):
           current_storage_state = STORAGE_ORIENT_A;
-          Kobuki_Rotate_Angle_Setpoint(kobuki.angle, 225);
+          //rotate clockwise 135 deg
+          Kobuki_Rotate_Angle_Setpoint(kobuki.angle, -135);
           // might be wrong direction IDK
           break;
 
         case (PATH_B):
           current_storage_state = STORAGE_ORIENT_B;
+          //rotate anticlockwise 135 deg
           Kobuki_Rotate_Angle_Setpoint(kobuki.angle, 135);
           // might also be wrong
           break;
