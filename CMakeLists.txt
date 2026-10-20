@@ -41,14 +41,15 @@ target_sources(${PROJECT_NAME} PRIVATE
 target_include_directories(${PROJECT_NAME} PRIVATE
   # User defined include directories
   Inc/drivers/CMSIS/Core/Include
-Inc/drivers/BSP/STM32G4xx_Nucleo
-Inc/drivers/STM32G4xx_HAL_Driver/Inc
-Inc/drivers/Core/Inc
-Inc/drivers/CMSIS/Device/ST/STM32G4xx/Include
-Src/Kobuki_Drivers
-Src/G474RE_Drivers
-Src/ADC
-Src/Ultrasonic
+  Inc/drivers/BSP/STM32G4xx_Nucleo
+  Inc/drivers/STM32G4xx_HAL_Driver/Inc
+  Inc/drivers/Core/Inc
+  Inc/drivers/CMSIS/Device/ST/STM32G4xx/Include
+  Src/Kobuki_Drivers
+  Src/G474RE_Drivers
+  Src/ADC
+  Src/Ultrasonic
+  Src/Search_Helper
 )
 
 # Compiler options

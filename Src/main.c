@@ -24,6 +24,7 @@
 #include "stm32g4xx.h"
 #include "uart.h"
 #include "ultrasonic.h"
+#include "search_helper.h"
 /* Kobuki button values */
 #define BUTTON_0_START 0x01U
 #define BUTTON_1_STOP 0x02U
@@ -123,13 +124,7 @@ void idleFSM() {}
 // }
 
 void searchFSM(void) {
-  static int16_t previous_angle; // signed, dummy to hold last angle for width calculation
-  static uint32_t width_ticks;
-  //variables to hold clear edge
-  static uint8_t clear_samples;
-  static uint32_t edge_width_ticks;
-  static int16_t edge_angle;
-  static bool scan_clear_seen;//avoid partial scans, initialized before every SEARCH_SCAN state
+  static SearchMeasurement scan;//global variable to store search measurement data
 
   switch (current_search_state) {
     case SEARCH_IDLE:
@@ -140,10 +135,7 @@ void searchFSM(void) {
       bollard_distance = 0;
       path_a_aligned = false;
       path_b_aligned = false;
-      width_ticks = 0;
-
-      scan_clear_seen = false;
-      clear_samples = 0;
+      Search_Reset(&scan);
       current_search_state = SEARCH_SCAN;
 
       Kobuki_Rotate(SEARCH_SPEED);
@@ -153,91 +145,32 @@ void searchFSM(void) {
       // Continuously rotate and scan for an object
       Ultrasonic_Detect(&object);
       item_found = object.detected != 0;
-      if (!item_found) {
-        if (clear_samples < SEARCH_CLEAR_CONFIRM_SAMPLES) ++clear_samples;
-        if (clear_samples >= SEARCH_CLEAR_CONFIRM_SAMPLES) scan_clear_seen = true;
-      } else if (scan_clear_seen) {
-        //only starts if clear scan
-        previous_angle = kobuki.angle;
-        width_ticks = 0;
-        scan_clear_seen = false;
-        clear_samples = 0;
+      if (Search_Find_Leading_Edge(&scan, item_found, kobuki.angle,SEARCH_CLEAR_CONFIRM_SAMPLES)) {
         current_search_state = SEARCH_CHECK_WIDTH;
-      } else {
-        clear_samples = 0;
       }
       Kobuki_Rotate(SEARCH_SPEED);
       break;
 
     case SEARCH_CHECK_WIDTH: {
-      //note
-      //delta: change in angle since last measurement, signed
-      //width_ticks: total movement since the edge
-      //edge_width_ticks: width of the object in ticks, unsigned
-      //extra_ticks: extra rotation since the first clear reading, signed
-
-      // Measure the width of the detected object
       Ultrasonic_Detect(&object);
-      item_found = (object.detected != 0);
-
-      // Calculate the change in angle since the last measurement
+      item_found = object.detected != 0;
       int16_t angle = kobuki.angle;
-      int32_t delta = (int32_t)angle - previous_angle;
 
-      //wrap around angle to be within -180 to 180 degrees
-      if (delta < -18000) delta += 36000;// eg: if delta is -350 deg, then + 360 to get 10 deg
-      if (delta > 18000) delta -= 36000;// eg: if delta is 350 deg, then - 360 to get -10 deg
-
-      previous_angle = angle;
-      //accumulate width_ticks
-      if (delta>0 && width_ticks<36000) {
-        //change in angle is positive and width_ticks is less than 360 degrees
-        width_ticks += (uint32_t)delta;
+      if (!Search_Find_Trailing_Edge(&scan, item_found, angle, SEARCH_CLEAR_CONFIRM_SAMPLES)) {
+        Kobuki_Rotate(SEARCH_SPEED);
+        break;
       }
-      // item_width = (uint16_t)(width_ticks/100);
 
-      // Check if the object is still detected
-      if (!item_found) {
-
-        //filter out noises
-        if (clear_samples == 0) {
-          //first clear sample
-          edge_width_ticks = width_ticks;
-          edge_angle = angle;
-        }
-        if (clear_samples < SEARCH_CLEAR_CONFIRM_SAMPLES - 1){
-          ++clear_samples;
-          Kobuki_Rotate(SEARCH_SPEED);
-          break;
-        } 
-
-        item_width = (uint16_t)(edge_width_ticks/100);//in degrees
-
-        //if the object is no longer detected, check if the width is within the threshold
-        if (edge_width_ticks > 0 && edge_width_ticks < ITEM_WIDTH_THRES*100) {
-          // Include rotation since the first clear reading when returning to the midpoint.
-          int32_t extra_ticks = (int32_t)angle - edge_angle;//extra rotation deg
-          if (extra_ticks < -18000) extra_ticks += 36000;
-          if (extra_ticks > 18000) extra_ticks -= 36000;
-
-          int32_t turn_ticks = -(int32_t)(edge_width_ticks/2U) -extra_ticks;//negative to turn backwards
-          if (turn_ticks < -18000) turn_ticks += 36000;
-          if (turn_ticks > 18000) turn_ticks -= 36000;
-
-          Kobuki_Rotate(STOP);
-
-          Kobuki_Rotate_Angle_Setpoint(angle,(int16_t)(turn_ticks/100));
-          kobuki.rotation_complete = false;
-          current_search_state = SEARCH_ALIGN_BOLLARD;
-          Kobuki_Rotate_Angle(angle);// rotation_complete set to true when aligned
-        } else {
-          scan_clear_seen = true;
-          current_search_state = SEARCH_SCAN;//restart
-          Kobuki_Rotate(SEARCH_SPEED);
-        }
+      item_width = Search_Width_Degrees(&scan);
+      if (Search_Width_Valid(&scan, ITEM_WIDTH_THRES)) {
+        Kobuki_Rotate(STOP);
+        Kobuki_Rotate_Angle_Setpoint(angle, Search_Midpoint_Turn_Degrees(&scan, angle));
+        kobuki.rotation_complete = false;
+        current_search_state = SEARCH_ALIGN_BOLLARD;
+        Kobuki_Rotate_Angle(angle);
       } else {
-        clear_samples = 0;
-        // if the object is still detected, continue rotating and measuring width
+        Search_Resume_Scan(&scan);
+        current_search_state = SEARCH_SCAN;
         Kobuki_Rotate(SEARCH_SPEED);
       }
       break;
