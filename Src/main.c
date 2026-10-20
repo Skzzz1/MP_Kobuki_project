@@ -33,6 +33,7 @@
 #define ITEM_WIDTH_THRES 95  // degrees
 #define SEARCH_DIST_MAX 650  // mm
 #define SEARCH_DIST_MIN 400  // mm
+#define SEARCH_CLEAR_CONFIRM_SAMPLES 3 // may change here
 #define BOLLARD_A_MAX 650
 #define BOLLARD_A_MIN 550
 #define BOLLARD_B_MAX 500
@@ -124,6 +125,10 @@ void idleFSM() {}
 void searchFSM(void) {
   static int16_t previous_angle; // signed, dummy to hold last angle for width calculation
   static uint32_t width_ticks;
+  //variables to hold clear edge
+  static uint8_t clear_samples;
+  static uint32_t edge_width_ticks;
+  static int16_t edge_angle;
   static bool scan_clear_seen;//avoid partial scans, initialized before every SEARCH_SCAN state
 
   switch (current_search_state) {
@@ -138,6 +143,7 @@ void searchFSM(void) {
       width_ticks = 0;
 
       scan_clear_seen = false;
+      clear_samples = 0;
       current_search_state = SEARCH_SCAN;
 
       Kobuki_Rotate(SEARCH_SPEED);
@@ -148,18 +154,28 @@ void searchFSM(void) {
       Ultrasonic_Detect(&object);
       item_found = object.detected != 0;
       if (!item_found) {
-        scan_clear_seen = true;
+        if (clear_samples < SEARCH_CLEAR_CONFIRM_SAMPLES) ++clear_samples;
+        if (clear_samples >= SEARCH_CLEAR_CONFIRM_SAMPLES) scan_clear_seen = true;
       } else if (scan_clear_seen) {
         //only starts if clear scan
         previous_angle = kobuki.angle;
         width_ticks = 0;
         scan_clear_seen = false;
+        clear_samples = 0;
         current_search_state = SEARCH_CHECK_WIDTH;
+      } else {
+        clear_samples = 0;
       }
       Kobuki_Rotate(SEARCH_SPEED);
       break;
 
     case SEARCH_CHECK_WIDTH: {
+      //note
+      //delta: change in angle since last measurement, signed
+      //width_ticks: total movement since the edge
+      //edge_width_ticks: width of the object in ticks, unsigned
+      //extra_ticks: extra rotation since the first clear reading, signed
+
       // Measure the width of the detected object
       Ultrasonic_Detect(&object);
       item_found = (object.detected != 0);
@@ -178,14 +194,39 @@ void searchFSM(void) {
         //change in angle is positive and width_ticks is less than 360 degrees
         width_ticks += (uint32_t)delta;
       }
-      item_width = (uint16_t)(width_ticks/100);
+      // item_width = (uint16_t)(width_ticks/100);
 
       // Check if the object is still detected
       if (!item_found) {
+
+        //filter out noises
+        if (clear_samples == 0) {
+          //first clear sample
+          edge_width_ticks = width_ticks;
+          edge_angle = angle;
+        }
+        if (clear_samples < SEARCH_CLEAR_CONFIRM_SAMPLES - 1){
+          ++clear_samples;
+          Kobuki_Rotate(SEARCH_SPEED);
+          break;
+        } 
+
+        item_width = (uint16_t)(edge_width_ticks/100);//in degrees
+
         //if the object is no longer detected, check if the width is within the threshold
-        if (width_ticks > 0 && width_ticks < ITEM_WIDTH_THRES*100) {
+        if (edge_width_ticks > 0 && edge_width_ticks < ITEM_WIDTH_THRES*100) {
+          // Include rotation since the first clear reading when returning to the midpoint.
+          int32_t extra_ticks = (int32_t)angle - edge_angle;//extra rotation deg
+          if (extra_ticks < -18000) extra_ticks += 36000;
+          if (extra_ticks > 18000) extra_ticks -= 36000;
+
+          int32_t turn_ticks = -(int32_t)(edge_width_ticks/2U) -extra_ticks;//negative to turn backwards
+          if (turn_ticks < -18000) turn_ticks += 36000;
+          if (turn_ticks > 18000) turn_ticks -= 36000;
+
           Kobuki_Rotate(STOP);
-          Kobuki_Rotate_Angle_Setpoint(angle, -(int16_t)(width_ticks/2/100));
+
+          Kobuki_Rotate_Angle_Setpoint(angle,(int16_t)(turn_ticks/100));
           kobuki.rotation_complete = false;
           current_search_state = SEARCH_ALIGN_BOLLARD;
           Kobuki_Rotate_Angle(angle);// rotation_complete set to true when aligned
@@ -195,6 +236,7 @@ void searchFSM(void) {
           Kobuki_Rotate(SEARCH_SPEED);
         }
       } else {
+        clear_samples = 0;
         // if the object is still detected, continue rotating and measuring width
         Kobuki_Rotate(SEARCH_SPEED);
       }
@@ -468,7 +510,7 @@ void Deposit_FSM(void){
     case(DEPOSIT_SCAN):
       if (item_found!){
         Scan_FSM();
-        //HAVENT WRITTEN THIS ONE YET, SHARED WITH SEARCH?
+        //TODO: HAVENT WRITTEN THIS ONE YET, SHARED WITH SEARCH?
       } else{
         current_deposit_state = DEPOSIT_ALIGN;
       }
@@ -477,7 +519,7 @@ void Deposit_FSM(void){
     case(DEPOSIT_ALIGN):
       if(is_bollard_faced!){
         Align_FSM();
-        //ALSO SHARED WITH SEARCH? NOT KNOW IF WRITTEN YET
+        //TODO: ALSO SHARED WITH SEARCH? NOT KNOW IF WRITTEN YET
       } else{
         current_deposit_state = DEPOSIT_APPROACH;
         Kobuki_Drive_Distance_Setpoint(kobuki.distance, item.distance);
@@ -626,6 +668,9 @@ void TIM3_IRQHandler(void) {
                 current_state = IDLE;
                 break;
         }
+        //searchFSM();//test
+        //Pathfind_FSM();//test
+        //storageFSM();//test
     }
 }
 
