@@ -14,6 +14,7 @@
 #define MM_PER_TICK (2.0 * PI * WHEEL_RADIUS * REVOLUTIONS_PER_TICK)
 #define DEG_PER_TICK (1.0 / 100.0)
 #define GAIN_ROTATE (1.0 / 0.90)
+#define ROTATION_TOLERANCE_DEG 1//TODO: test this value, 1 degree is too small, may cause oscillation
 #define GAIN_DRIVE (100.0 / 100.0)
 #define sign(x) ((int8_t)((x) >= 0 ? 1 : -1))
 #define EXTERN_PWR 0x30
@@ -72,7 +73,7 @@ void Kobuki_Rotate_Angle_Setpoint(int16_t current_angle_tick,
   setpoint_angle_deg = (init_angle + rot_angle_deg + 360) % 360;  // [0 -360]
 }
 
-void Kobuki_Rotate_Angle(int16_t current_angle_tick) {
+uint8_t Kobuki_Rotate_Angle(int16_t current_angle_tick) {
   volatile int16_t speed;
   volatile int16_t error;
   volatile int32_t current_angle_deg;
@@ -94,12 +95,15 @@ void Kobuki_Rotate_Angle(int16_t current_angle_tick) {
     }
   }
 
-  if (abs(error) <= 0) {
+  if (abs(error) <= ROTATION_TOLERANCE_DEG) {//allow error to avoid overshoot and oscillation
+    Kobuki_Rotate(STOP);//clean immediate stop once aligned
     rotation_complete = 1;
   } else {
+    rotation_complete = 0;
     speed = (sign(error) * MIN_SPEED) + (int16_t)(GAIN_ROTATE * error);
     Kobuki_Rotate(speed);
   }
+  return rotation_complete;
 }
 
 void Kobuki_Drive_Distance_Setpoint(uint16_t current_distance_tick,

@@ -24,6 +24,7 @@
 #include "stm32g4xx.h"
 #include "uart.h"
 #include "ultrasonic.h"
+#include "search_helper.h"
 /* Kobuki button values */
 #define BUTTON_0_START 0x01U
 #define BUTTON_1_STOP 0x02U
@@ -33,10 +34,13 @@
 #define ITEM_WIDTH_THRES 95  // degrees
 #define SEARCH_DIST_MAX 650  // mm
 #define SEARCH_DIST_MIN 400  // mm
+#define SEARCH_CLEAR_CONFIRM_SAMPLES 3 // may change here
 #define BOLLARD_A_MAX 650
 #define BOLLARD_A_MIN 550
-#define BOLLARD_B_MAX 400
-#define BOLLARD_B_MIN 500
+#define BOLLARD_B_MAX 500
+#define BOLLARD_B_MIN 400
+#define SEARCH_SPEED 75 //mm/s, TODO: test this
+#define STOP 0 // speed for stopping the kobuki
 
 // States
 typedef enum { IDLE, SEARCH, ORIENT, PATHFIND, STORAGE, DEPOSIT } State;
@@ -94,55 +98,148 @@ volatile Kobuki_LED_Enum led_1, led_2;
 volatile Path path;
 
 // States
-volatile State current_state;
-volatile Search_State current_search_state;
-volatile Storage_State current_storage_state;
-volatile Pathfind_State current_pathfind_state;
-volatile Deposit_State current_deposit_state;
+volatile State current_state = IDLE;
+volatile Search_State current_search_state = SEARCH_IDLE;
+volatile Storage_State current_storage_state = STORAGE_IDLE;
+volatile Pathfind_State current_pathfind_state = PATHFIND_IDLE;
+volatile Deposit_State current_deposit_state = DEPOSIT_IDLE;
 
 //State Flags
+volatile bool search_complete = false;
 volatile bool pathfind_complete = false;
 volatile bool deposit_complete = false;
 
 void idleFSM() {}
 
-void search(int16_t current_angle_tick) {
-  // Search method:
-  // - Roate 5 deg
-  Kobuki_Rotate_Angle_Setpoint(current_angle_tick, 5);
+//redundant - changed to continuous rotation and search at the start of FSM
+// void search(int16_t current_angle_tick) {
+//   // Search method:
+//   // - Roate 5 deg
+//   Kobuki_Rotate_Angle_Setpoint(current_angle_tick, 5);
 
-  // - Scan for an object within distance
-  Object* object;
-  Ultrasonic_Detect(object);
-  // - Repeat until object found
-}
+//   // - Scan for an object within distance
+//   Object* object;
+//   Ultrasonic_Detect(object);
+//   // - Repeat until object found
+// }
 
-void searchFSM() {
+void searchFSM(void) {
+  static SearchMeasurement scan;//global variable to store search measurement data
+
   switch (current_search_state) {
-    case (SEARCH_IDLE):
+    case SEARCH_IDLE:
+      // Initialize search variables
+      item_found = false;
+      item_width = 0;
+      is_bollard_faced = false;
+      bollard_distance = 0;
+      path_a_aligned = false;
+      path_b_aligned = false;
+      Search_Reset(&scan);
       current_search_state = SEARCH_SCAN;
+
+      Kobuki_Rotate(SEARCH_SPEED);
       break;
-    case (SEARCH_SCAN):
-      if (object.detected == 1) {
-        // rotate until edge of object is found
-      } else {
+
+    case SEARCH_SCAN:
+      // Continuously rotate and scan for an object
+      Ultrasonic_Detect(&object);
+      item_found = object.detected != 0;
+      if (Search_Find_Leading_Edge(&scan, item_found, kobuki.angle,SEARCH_CLEAR_CONFIRM_SAMPLES)) {
+        current_search_state = SEARCH_CHECK_WIDTH;
       }
-      // begin searching
-      // if item located item_found=1
-      // if item_found == 1
-      // go to next state
+      Kobuki_Rotate(SEARCH_SPEED);
       break;
-    case (SEARCH_CHECK_WIDTH):
+
+    case SEARCH_CHECK_WIDTH: {
+      Ultrasonic_Detect(&object);
+      item_found = object.detected != 0;
+      int16_t angle = kobuki.angle;
+
+      if (!Search_Find_Trailing_Edge(&scan, item_found, angle, SEARCH_CLEAR_CONFIRM_SAMPLES)) {
+        Kobuki_Rotate(SEARCH_SPEED);
+        break;
+      }
+
+      item_width = Search_Width_Degrees(&scan);
+      if (Search_Width_Valid(&scan, ITEM_WIDTH_THRES)) {
+        Kobuki_Rotate(STOP);
+        Kobuki_Rotate_Angle_Setpoint(angle, Search_Midpoint_Turn_Degrees(&scan, angle));
+        kobuki.rotation_complete = false;
+        current_search_state = SEARCH_ALIGN_BOLLARD;
+        Kobuki_Rotate_Angle(angle);
+      } else {
+        Search_Resume_Scan(&scan);
+        current_search_state = SEARCH_SCAN;
+        Kobuki_Rotate(SEARCH_SPEED);
+      }
       break;
-    case (SEARCH_ALIGN_BOLLARD):
+    }
+
+    //TODO: maybe add a timeout for the search, if it takes too long, go to idle?
+    case SEARCH_ALIGN_BOLLARD:
+      //quick update of rotation_complete flag rather than waiting for next timer interrupt
+      kobuki.rotation_complete = Kobuki_Rotate_Angle(kobuki.angle);
+      if (kobuki.rotation_complete) {
+        //this allows quicker stop response (no extra rotation after alignment)
+        Kobuki_Rotate(STOP);
+        current_search_state = SEARCH_CHECK_DISTANCE;
+      }
       break;
-    case (SEARCH_CHECK_DISTANCE):
+
+    case SEARCH_CHECK_DISTANCE:
+      is_bollard_faced = false;
+      Ultrasonic_Detect(&object);
+      item_found = (object.detected != 0);
+
+      bollard_distance = object.range_mm;
+
+      if (item_found && bollard_distance > SEARCH_DIST_MIN && bollard_distance < SEARCH_DIST_MAX) {
+        if (bollard_distance > BOLLARD_B_MIN && bollard_distance < BOLLARD_B_MAX) {
+          // if seeing bollard B, need to rotate 90 deg ccw to face path A
+          path = PATH_A;
+          Kobuki_Rotate_Angle_Setpoint(kobuki.angle, 90);
+          current_search_state = SEARCH_ALIGN_A;
+        } else if (bollard_distance > BOLLARD_A_MIN && bollard_distance < BOLLARD_A_MAX) {
+          // if seeing bollard A, need to rotate 90 deg cw to face path B
+          path = PATH_B;
+          Kobuki_Rotate_Angle_Setpoint(kobuki.angle, -90);
+          current_search_state = SEARCH_ALIGN_B;
+        } else {
+          current_search_state = SEARCH_IDLE;
+          break;
+        }
+        is_bollard_faced = true;
+        kobuki.rotation_complete = false;
+        Kobuki_Rotate_Angle(kobuki.angle);
+      } else {
+        current_search_state = SEARCH_IDLE;
+      }
       break;
-    case (SEARCH_ALIGN_B):
+
+    case SEARCH_ALIGN_A://same as logic in B
+    case SEARCH_ALIGN_B:
+      if (kobuki.rotation_complete) {
+        Kobuki_Rotate(STOP);
+        //determine which path is aligned based on the current search state
+        path_a_aligned = (current_search_state == SEARCH_ALIGN_A);
+        path_b_aligned = (current_search_state == SEARCH_ALIGN_B);
+        current_search_state = END;
+      } else {
+        Kobuki_Rotate_Angle(kobuki.angle);
+      }
       break;
-    case (SEARCH_ALIGN_A):
+
+    case END:
+      Kobuki_Rotate(STOP);
+      search_complete = true;
+      current_search_state = SEARCH_IDLE;
+      current_state = PATHFIND;
       break;
-    case (END):
+
+    default:
+      Kobuki_Rotate(STOP);
+      current_search_state = SEARCH_IDLE;
       break;
   }
 }
@@ -346,7 +443,7 @@ void Deposit_FSM(void){
     case(DEPOSIT_SCAN):
       if (item_found!){
         Scan_FSM();
-        //HAVENT WRITTEN THIS ONE YET, SHARED WITH SEARCH?
+        //TODO: HAVENT WRITTEN THIS ONE YET, SHARED WITH SEARCH?
       } else{
         current_deposit_state = DEPOSIT_ALIGN;
       }
@@ -355,7 +452,7 @@ void Deposit_FSM(void){
     case(DEPOSIT_ALIGN):
       if(is_bollard_faced!){
         Align_FSM();
-        //ALSO SHARED WITH SEARCH? NOT KNOW IF WRITTEN YET
+        //TODO: ALSO SHARED WITH SEARCH? NOT KNOW IF WRITTEN YET
       } else{
         current_deposit_state = DEPOSIT_APPROACH;
         Kobuki_Drive_Distance_Setpoint(kobuki.distance, item.distance);
@@ -382,82 +479,159 @@ void Deposit_FSM(void){
   }
 }
 
-void Deposit_FSM()
+void Timer_Init(TIM_TypeDef *timer, IRQn_Type irq_type, uint16_t psc, uint16_t arr, bool enable_interrupt) {
+  timer->PSC = psc;
+  timer->ARR = arr;
+  if (enable_interrupt) {
+    timer->DIER |= 1<<0; // Turn on interrupts for the Timer
+    NVIC_EnableIRQ(irq_type); // Allow timer to interrupt Cortex processor
+  }
+  // Enable Timer/Counter
+  timer->CR1 |= 1<<0;
+}
+
 
 int main(void) {
   // Initialize
   UART_Init();
   ADC_Init();
   Ultrasonic_Init();
+  //Timer Init 
+  Clock_Enable(TIM3_BUS);
+  Timer_Init(TIM3, TIM3_IRQn, 47, 19999, true);	        // Configure TIM3 to 20 ms update
+  NVIC_SetPriority(TIM3_IRQn, 1);
+
   current_state = IDLE;
   led_1 = OFF;
   led_2 = OFF;
 
   while (1) {
-    Kobuki_Read(&kobuki);
-    Ultrasonic_Detect(&object);
-    Kobuki_Update_LEDs(led_1, led_2);
 
-    // Main FSM
-    switch (current_state) {
-      case (IDLE):
-        break;
+    //empty 
 
-      case (SEARCH):
-        searchFSM();
-        break;
+    // // Main FSM
+    // switch (current_state) {
+    //   case (IDLE):
+    //     break;
 
-      case (ORIENT):
-        break;
+    //   case (SEARCH):
+    //     searchFSM();
+    //     break;
 
-      case (PATHFIND):
-        if(pathfind_complete!){
-          Pathfind_FSM();
-        } else{
-          current_state = STORAGE;
-        }
-        break;
+    //   case (ORIENT):
+    //     break;
 
-      case (STORAGE):
-        break;
+    //   case (PATHFIND):
+    //     if(pathfind_complete!){
+    //       Pathfind_FSM();
+    //     } else{
+    //       current_state = STORAGE;
+    //     }
+    //     break;
 
-      case (DEPOSIT):
-        if(deposit_complete!){
-          Deposit_FSM();
-        } else{
-          current_state = IDLE;
-          //end program
-        }
-        break;
-    }
+    //   case (STORAGE):
+    //     break;
 
-    // A TEST FSM
-    switch (current_state) {
-      case IDLE:
-        if (kobuki.button == BUTTON_0_START) {
-          current_state = SEARCH;
-          led_1 = RED;
-          Kobuki_Rotate_Angle_Setpoint(kobuki.angle, 90);
-          // Kobuki_Drive_Distance_Setpoint ( kobuki . distance ,100) ;
-
-        } else {
-          Kobuki_Drive(STOP);
-        }
-        break;
-
-      case SEARCH:
-        if ((kobuki.wheeldrop != 0) | ((kobuki.bumper + kobuki.cliff) != 0) |
-            (kobuki.rotation_complete == true) |
-            (kobuki.distance_complete == true)) {
-          Kobuki_Rotate_Angle_Setpoint(kobuki.angle, 90);
-        } else if (object.detected == 1) {
-          current_state = IDLE;
-          led_1 = YELLOW;
-        } else {
-          Kobuki_Rotate_Angle(kobuki.angle);
-          // Kobuki_Drive_Distance ( kobuki . distance ) ;
-        }
-        break;
-    }
+    //   case (DEPOSIT):
+    //     if(deposit_complete!){
+    //       Deposit_FSM();
+    //     } else{
+    //       current_state = IDLE;
+    //       //end program
+    //     }
+    //     break;
   }
 }
+
+void TIM3_IRQHandler(void) {
+    if (TIM3->SR & (1 << 0)) {
+        TIM3->SR &= ~(1 << 0); // Clear update interrupt flag
+        Kobuki_Read(&kobuki);
+        Ultrasonic_Detect(&object);
+        Kobuki_Update_LEDs(led_1, led_2);
+
+        // button 1 - stop, button 0 - start
+        if (kobuki.button & BUTTON_1_STOP) {
+            Kobuki_Drive(STOP);
+            current_state = IDLE;
+            return;
+        }
+
+        //main FSM
+        switch (current_state) {
+            case IDLE:
+              //initialize all states
+                Kobuki_Drive(STOP);
+                if (kobuki.button & BUTTON_0_START) {
+                    current_search_state = SEARCH_IDLE;
+                    current_pathfind_state = PATHFIND_IDLE;
+                    current_storage_state = STORAGE_IDLE;
+                    current_deposit_state = DEPOSIT_IDLE;
+                    search_complete = false;
+                    pathfind_complete = false;
+                    deposit_complete = false;
+                    current_state = SEARCH;
+                }
+                break;
+            case SEARCH:
+                if (!search_complete) {
+                    searchFSM();
+                } else current_state = PATHFIND;
+                //TODO: check if double setting current_state to PATHFIND is fine, this is the same issue with other states
+                break;
+            case PATHFIND:
+                if (pathfind_complete) {
+                    current_state = STORAGE;
+                } else Pathfind_FSM();
+                break;
+            case STORAGE:
+                storageFSM();
+                break;
+            case DEPOSIT:
+                if (deposit_complete) {
+                    Kobuki_Drive(STOP);
+                    current_state = IDLE;
+                } else {
+                    Deposit_FSM();
+                }
+                break;
+            // case ORIENT:, we dont have this state in our design
+            default:
+                Kobuki_Drive(STOP);
+                current_state = IDLE;
+                break;
+        }
+        //searchFSM();//test
+        //Pathfind_FSM();//test
+        //storageFSM();//test
+    }
+}
+
+    // // A TEST FSM
+    // switch (current_state) {
+    //   case IDLE:
+    //     if (kobuki.button == BUTTON_0_START) {
+    //       current_state = SEARCH;
+    //       led_1 = RED;
+    //       Kobuki_Rotate_Angle_Setpoint(kobuki.angle, 90);
+    //       // Kobuki_Drive_Distance_Setpoint ( kobuki . distance ,100) ;
+
+    //     } else {
+    //       Kobuki_Drive(STOP);
+    //     }
+    //     break;
+
+    //   case SEARCH:
+    //     if ((kobuki.wheeldrop != 0) | ((kobuki.bumper + kobuki.cliff) != 0) |
+    //         (kobuki.rotation_complete == true) |
+    //         (kobuki.distance_complete == true)) {
+    //       Kobuki_Rotate_Angle_Setpoint(kobuki.angle, 90);
+    //     } else if (object.detected == 1) {
+    //       current_state = IDLE;
+    //       led_1 = YELLOW;
+    //     } else {
+    //       Kobuki_Rotate_Angle(kobuki.angle);
+    //       // Kobuki_Drive_Distance ( kobuki . distance ) ;
+    //     }
+    //     break;
+    // }
