@@ -398,14 +398,14 @@ void storageFSM() {
       switch (path) {
         case (PATH_A):
           current_storage_state = STORAGE_ORIENT_A;
-          //rotate clockwise 135 deg
+          // rotate clockwise 135 deg
           Kobuki_Rotate_Angle_Setpoint(kobuki.angle, -135);
           // might be wrong direction IDK
           break;
 
         case (PATH_B):
           current_storage_state = STORAGE_ORIENT_B;
-          //rotate anticlockwise 135 deg
+          // rotate anticlockwise 135 deg
           Kobuki_Rotate_Angle_Setpoint(kobuki.angle, 135);
           // might also be wrong
           break;
@@ -575,6 +575,34 @@ void TIM3_IRQHandler(void) {
       Kobuki_Drive(STOP);
       current_state = IDLE;
       return;
+    }
+    
+    // wheeldrop
+    if (kobuki.wheeldrop != 0) {
+      Kobuki_Drive(STOP);
+      current_state = IDLE;
+      return;
+    }
+
+    // right cliff/bumper
+    if (kobuki.cliff == 0x01 || kobuki.bumper == 0x01) {
+      Kobuki_Drive(STOP);
+      Kobuki_Rotate_Angle_Setpoint(kobuki.angle, 5);
+      while (kobuki.rotation_complete == false) {
+        Kobuki_Rotate_Angle(kobuki.angle);
+      }
+      // left cliff/bumper
+    } else if (kobuki.cliff == 0x02 || kobuki.bumper == 0x02) {
+      Kobuki_Drive(STOP);
+      Kobuki_Rotate_Angle_Setpoint(kobuki.angle, -5);
+      while (kobuki.rotation_complete == false) {
+        Kobuki_Rotate_Angle(kobuki.angle);
+      }
+
+      // front cliff/bumper
+    } else if (kobuki.cliff == 0x04 || kobuki.bumper == 0x04) {
+      Kobuki_Drive(STOP);
+      current_state = IDLE;
     }
 
     // main FSM
