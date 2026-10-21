@@ -667,13 +667,6 @@ void TIM3_IRQHandler(void) {
       return;
     }
 
-    // wheeldrop
-    if (kobuki.wheeldrop != 0) {
-      Kobuki_Drive(STOP);
-      current_state = IDLE;
-      return;
-    }
-
     // right cliff/bumper
     if (kobuki.cliff == 0x01 || kobuki.bumper == 0x01) {
       Kobuki_Drive(STOP);
