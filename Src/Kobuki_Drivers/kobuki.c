@@ -131,6 +131,7 @@ void Kobuki_Drive_Distance(uint16_t current_distance_tick) {
   }
 
   if (abs(error) <= 2) {
+    Kobuki_Drive(STOP);//added so kobuki stops immediately once distance is reached, otherwise it will overshoot and oscillate
     distance_complete = 1;
 
   } else {

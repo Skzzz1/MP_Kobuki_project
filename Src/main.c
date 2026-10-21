@@ -41,6 +41,7 @@
 #define BOLLARD_B_MIN 200
 #define SEARCH_SPEED 60  // mm/s, TODO: test this
 #define STOP 0           // speed for stopping the kobuki
+#define parking_distance_mm 100 // distance to stop from bollard when depositing object
 
 // States
 typedef enum { IDLE, SEARCH, ORIENT, PATHFIND, STORAGE, DEPOSIT } State;
@@ -76,6 +77,7 @@ typedef enum {
 typedef enum {
   DEPOSIT_IDLE,
   DEPOSIT_SCAN,
+  DEPOSIT_CHECK_WIDTH,
   DEPOSIT_ALIGN,
   DEPOSIT_APPROACH,
   DEPOSIT_END
@@ -123,8 +125,7 @@ void idleFSM() {}
 // }
 
 void searchFSM(void) {
-  static SearchMeasurement
-      scan;  // global variable to store search measurement data
+  static SearchMeasurement scan;  // global variable to store search measurement data
 
   switch (current_search_state) {
     case SEARCH_IDLE:
@@ -422,7 +423,7 @@ void storageFSM() {
         Kobuki_Rotate_Angle(kobuki.angle);
       } else {
         current_storage_state = STORAGE_ENTER;
-        Kobuki_Drive_Distance_Setpoint(kobuki.distance, 275);
+        Kobuki_Drive_Distance_Setpoint(kobuki.distance, 500);// drive 500 mm into storage
       }
       break;
 
@@ -432,7 +433,7 @@ void storageFSM() {
         Kobuki_Rotate_Angle(kobuki.angle);
       } else {
         current_storage_state = STORAGE_ENTER;
-        Kobuki_Drive_Distance_Setpoint(kobuki.distance, 275);
+        Kobuki_Drive_Distance_Setpoint(kobuki.distance, 500);// drive 500 mm into storage
       }
       break;
 
@@ -453,47 +454,111 @@ void storageFSM() {
 // Using stages scan, align and approach to deposit the object
 
 void Deposit_FSM(void) {
+  static SearchMeasurement scan;// global variable to store search measurement data
+
   switch (current_deposit_state) {
-    case (DEPOSIT_IDLE):
+    case DEPOSIT_IDLE:
+      // Initialize deposit variables
+      deposit_complete = false;
+      item_found = false;
+      is_bollard_faced = false;
+      bollard_distance = 0;
+      Search_Reset(&scan);
+
+      // move to next stage
       current_deposit_state = DEPOSIT_SCAN;
+      Kobuki_Rotate(SEARCH_SPEED);
       break;
 
-    case (DEPOSIT_SCAN):
-      if (!item_found) {
-        // Scan_FSM();
-        //  TODO: HAVENT WRITTEN THIS ONE YET, SHARED WITH SEARCH?
-      } else {
-        current_deposit_state = DEPOSIT_ALIGN;
+    case DEPOSIT_SCAN:
+      Ultrasonic_Detect(&object);
+      item_found = (object.detected != 0);
+      if (Search_Find_Leading_Edge(&scan, item_found, kobuki.angle,SEARCH_CLEAR_CONFIRM_SAMPLES)) {
+        current_deposit_state = DEPOSIT_CHECK_WIDTH;
       }
+      Kobuki_Rotate(SEARCH_SPEED);
       break;
 
-    case (DEPOSIT_ALIGN):
-      if (!is_bollard_faced) {
-        // Align_FSM();
-        //  TODO: ALSO SHARED WITH SEARCH? NOT KNOW IF WRITTEN YET
-      } else {
-        current_deposit_state = DEPOSIT_APPROACH;
-        // Kobuki_Drive_Distance_Setpoint(kobuki.distance, item.distance);
-        //  item.distance, dont know if we have included that yet. sense the
-        //  distance in this step?
-        Kobuki_Drive_Distance(kobuki.distance);
+    case DEPOSIT_CHECK_WIDTH: {
+      Ultrasonic_Detect(&object);
+      item_found = (object.detected != 0);
+      int16_t angle = kobuki.angle;
+
+      if (Search_Find_Trailing_Edge(&scan, item_found, angle, SEARCH_CLEAR_CONFIRM_SAMPLES)) {
+        item_width = Search_Width_Degrees(&scan);
+        if (Search_Width_Valid(&scan, ITEM_WIDTH_THRES)) {
+          Kobuki_Rotate(STOP);
+          Kobuki_Rotate_Angle_Setpoint(angle, Search_Midpoint_Turn_Degrees(&scan, angle));
+          kobuki.rotation_complete = false;
+          current_deposit_state = DEPOSIT_ALIGN;
+          kobuki.rotation_complete = Kobuki_Rotate_Angle(angle);
+          break;
+        }
+        Search_Resume_Scan(&scan);
+        current_deposit_state = DEPOSIT_SCAN;
       }
+      Kobuki_Rotate(SEARCH_SPEED);
       break;
+    }
 
-    case (DEPOSIT_APPROACH):
-      if (!kobuki.distance_complete) {
-        Kobuki_Drive_Distance(kobuki.distance);
-        // if the item is not reached yet, continue to approach
-      } else {
+    case DEPOSIT_ALIGN:
+      kobuki.rotation_complete = Kobuki_Rotate_Angle(kobuki.angle);
+      if (!kobuki.rotation_complete) {
+        break;
+      }
+      Kobuki_Rotate(STOP);
+      Ultrasonic_Detect(&object);
+      item_found = (object.detected != 0);//double check if object is still detected after alignment
+      bollard_distance = object.range_mm;
+      if (!item_found || bollard_distance >= BOLLARD_B_MAX) {
+        // if detected object out of range, TODO: use B distance temporarily
+        is_bollard_faced = false;
+        current_deposit_state = DEPOSIT_IDLE;
+        break;
+      }
+      is_bollard_faced = true;
+      if (bollard_distance <= parking_distance_mm) {
+        //TODO: if too close to bollard, maybe reverse a bit
+        Kobuki_Drive(STOP);
         current_deposit_state = DEPOSIT_END;
         deposit_complete = true;
+        break;
+      }
+      Kobuki_Drive_Distance_Setpoint(kobuki.distance, (int16_t)(bollard_distance - parking_distance_mm));
+      kobuki.distance_complete = false;
+      current_deposit_state = DEPOSIT_APPROACH;
+      Kobuki_Drive_Distance(kobuki.distance);
+      break;
+
+    case DEPOSIT_APPROACH:
+      // check distance continuously
+      Ultrasonic_Detect(&object);
+      item_found = (object.detected != 0);
+      bollard_distance = object.range_mm;
+      if (kobuki.distance_complete || (item_found && bollard_distance <= parking_distance_mm)) {
+        Kobuki_Drive(STOP);
+        current_deposit_state = DEPOSIT_END;
+        deposit_complete = true;
+        break;
+      } else if (!item_found) {
+        //refind the bollard if lost during approach
+        Kobuki_Drive(STOP);
+        is_bollard_faced = false;
+        current_deposit_state = DEPOSIT_IDLE;
+      } else {
+        // Keep the encoder target set during alignment; ultrasonic range can stop us early.
+        Kobuki_Drive_Distance(kobuki.distance);
       }
       break;
 
-    case (DEPOSIT_END):
-      if (!deposit_complete) {
-        deposit_complete = true;
-      }
+    case DEPOSIT_END:
+      Kobuki_Drive(STOP);
+      deposit_complete = true;
+      break;
+
+    default:
+      Kobuki_Drive(STOP);
+      current_deposit_state = DEPOSIT_IDLE;
       break;
   }
 }
@@ -570,8 +635,8 @@ void TIM3_IRQHandler(void) {
     Ultrasonic_Detect(&object);
     Kobuki_Update_LEDs(led_1, led_2);
 
-    // button 1 - stop, button 0 - start
-    if (kobuki.button & BUTTON_1_STOP) {
+    // added to stop kobuki if wheel drop
+    if ((kobuki.button & BUTTON_1_STOP) || kobuki.wheeldrop != 0) {
       Kobuki_Drive(STOP);
       current_state = IDLE;
       return;
