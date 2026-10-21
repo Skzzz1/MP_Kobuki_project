@@ -1,4 +1,4 @@
-set(CMAKE_C_COMPILER "/Users/willlatter/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/arm-none-eabi-gcc")
+set(CMAKE_C_COMPILER "/Users/skzzz/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/arm-none-eabi-gcc")
 set(CMAKE_C_COMPILER_ARG1 "")
 set(CMAKE_C_COMPILER_ID "GNU")
 set(CMAKE_C_COMPILER_VERSION "14.3.1")
@@ -24,11 +24,11 @@ set(CMAKE_C_COMPILER_ARCHITECTURE_ID "")
 
 
 
-set(CMAKE_AR "/Users/willlatter/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/arm-none-eabi-ar")
-set(CMAKE_C_COMPILER_AR "/Users/willlatter/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/arm-none-eabi-gcc-ar")
-set(CMAKE_RANLIB "/Users/willlatter/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/arm-none-eabi-ranlib")
-set(CMAKE_C_COMPILER_RANLIB "/Users/willlatter/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/arm-none-eabi-gcc-ranlib")
-set(CMAKE_LINKER "/Users/willlatter/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/arm-none-eabi-ld")
+set(CMAKE_AR "/usr/bin/ar")
+set(CMAKE_C_COMPILER_AR "/Users/skzzz/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/arm-none-eabi-gcc-ar")
+set(CMAKE_RANLIB "/usr/bin/ranlib")
+set(CMAKE_C_COMPILER_RANLIB "/Users/skzzz/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/arm-none-eabi-gcc-ranlib")
+set(CMAKE_LINKER "/usr/bin/ld")
 set(CMAKE_LINKER_LINK "")
 set(CMAKE_LINKER_LLD "")
 set(CMAKE_C_COMPILER_LINKER "")

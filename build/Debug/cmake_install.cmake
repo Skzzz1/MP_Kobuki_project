@@ -1,4 +1,4 @@
-# Install script for directory: /Users/willlatter/Library/CloudStorage/OneDrive-AdelaideUniversity/Year 3/Sem 2/Microcontroller Programming/MP_Kobuki_project
+# Install script for directory: /Users/skzzz/Desktop/UniCourse/MP/MP_Kobuki_project
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -34,13 +34,13 @@ endif()
 
 # Set path to fallback-tool for dependency-resolution.
 if(NOT DEFINED CMAKE_OBJDUMP)
-  set(CMAKE_OBJDUMP "/Users/willlatter/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/arm-none-eabi-objdump")
+  set(CMAKE_OBJDUMP "/usr/bin/objdump")
 endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
 if(CMAKE_INSTALL_LOCAL_ONLY)
-  file(WRITE "/Users/willlatter/Library/CloudStorage/OneDrive-AdelaideUniversity/Year 3/Sem 2/Microcontroller Programming/MP_Kobuki_project/build/Debug/install_local_manifest.txt"
+  file(WRITE "/Users/skzzz/Desktop/UniCourse/MP/MP_Kobuki_project/build/Debug/install_local_manifest.txt"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
 endif()
 if(CMAKE_INSTALL_COMPONENT)
@@ -56,6 +56,6 @@ else()
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
-  file(WRITE "/Users/willlatter/Library/CloudStorage/OneDrive-AdelaideUniversity/Year 3/Sem 2/Microcontroller Programming/MP_Kobuki_project/build/Debug/${CMAKE_INSTALL_MANIFEST}"
+  file(WRITE "/Users/skzzz/Desktop/UniCourse/MP/MP_Kobuki_project/build/Debug/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
 endif()
