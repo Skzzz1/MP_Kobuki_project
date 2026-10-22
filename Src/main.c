@@ -31,19 +31,19 @@
 #define BUTTON_2_ROTATE 0x04U
 
 // **TBC**
-#define ITEM_WIDTH_THRES 95             // degrees
+#define ITEM_WIDTH_THRES 100             // degrees
 #define SEARCH_DIST_MAX 1000             // mm
 #define SEARCH_DIST_MIN 75             // mm
 #define SEARCH_CLEAR_CONFIRM_SAMPLES 3  // may change here
 #define BOLLARD_A_MAX 1000
 #define BOLLARD_A_MIN 700
 #define BOLLARD_B_MAX 690
-#define BOLLARD_CENTRE_MAX 690
 #define BOLLARD_B_MIN 200
+#define BOLLARD_CENTRE_MAX 600
 #define PATHFIND_SPEED 120  // mm/s while following each straight segment
 #define PATHFIND_CORNER_DEG 90
 #define PATHFIND_CLEAR_SAMPLES 3U
-#define parking_distance_mm 150  // distance to stop from bollard when depositing object
+#define parking_distance_mm 370  // distance to stop from bollard when depositing object
 
 // States
 typedef enum { IDLE, SEARCH, ORIENT, PATHFIND, STORAGE, DEPOSIT } State;
@@ -485,13 +485,13 @@ void Deposit_FSM(void) {
       break;
 
     case DEPOSIT_SCAN:
-      Ultrasonic_Detect(&object);
+      Deposit_Ultrasonic_Detect(&object);
+      Kobuki_Update_LEDs(YELLOW,YELLOW);
       item_found = (object.detected != 0);
-      if (Search_Find_Leading_Edge(&scan, item_found, kobuki.angle,
-                                   SEARCH_CLEAR_CONFIRM_SAMPLES)) {
+      if (Search_Find_Leading_Edge(&scan, item_found, kobuki.angle,SEARCH_CLEAR_CONFIRM_SAMPLES)) {
         current_deposit_state = DEPOSIT_CHECK_WIDTH;
       }
-      Kobuki_Update_LEDs(GREEN,GREEN);
+      
       Kobuki_Rotate(SEARCH_SPEED);
       break;
 
@@ -521,7 +521,7 @@ void Deposit_FSM(void) {
     }
 
     case DEPOSIT_ALIGN:
-      Kobuki_Update_LEDs(RED,GREEN);
+      Kobuki_Update_LEDs(YELLOW,RED);
       kobuki.rotation_complete = Kobuki_Rotate_Angle(kobuki.angle);
       if (!kobuki.rotation_complete) {
         break;
@@ -553,9 +553,9 @@ void Deposit_FSM(void) {
       break;
 
     case DEPOSIT_APPROACH:
-    Kobuki_Update_LEDs(YELLOW,YELLOW);
+      Kobuki_Update_LEDs(GREEN,GREEN);
       // check distance continuously
-      Ultrasonic_Detect(&object);
+      Deposit_Ultrasonic_Detect(&object);
       item_found = (object.detected != 0);
       bollard_distance = object.range_mm;
       if (kobuki.distance_complete ||
@@ -616,41 +616,7 @@ int main(void) {
   led_1 = OFF;
   led_2 = OFF;
 
-  while (1) {
-    // empty
-
-    // // Main FSM
-    // switch (current_state) {
-    //   case (IDLE):
-    //     break;
-
-    //   case (SEARCH):
-    //     searchFSM();
-    //     break;
-
-    //   case (ORIENT):
-    //     break;
-
-    //   case (PATHFIND):
-    //     if(pathfind_complete!){
-    //       Pathfind_FSM();
-    //     } else{
-    //       current_state = STORAGE;
-    //     }
-    //     break;
-
-    //   case (STORAGE):
-    //     break;
-
-    //   case (DEPOSIT):
-    //     if(deposit_complete!){
-    //       Deposit_FSM();
-    //     } else{
-    //       current_state = IDLE;
-    //       //end program
-    //     }
-    //     break;
-  }
+  while (1) {}
 }
 
 void TIM3_IRQHandler(void) {
@@ -801,9 +767,10 @@ void TIM3_IRQHandler(void) {
         current_state = IDLE;
         break;
     }
+
     // searchFSM();//test
     // Pathfind_FSM();//test
-    // storageFSM();//test
+    // Deposit_FSM();//test
   }
 }
 
