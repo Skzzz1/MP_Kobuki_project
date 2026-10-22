@@ -6,6 +6,7 @@
 #define ULTRASONIC_CHANNEL ADC_CHANNEL_1
 #define ADC_MAX_VALUE 4095UL
 #define MB1043_FULL_SCALE_MM 5120UL
+#define DEPOSIT_ULTRASONIC_DETECT_RANGE_MM 700
 
 void Ultrasonic_Init(void) {
   RCC->AHB2ENR |= (1 << 0);
@@ -27,4 +28,10 @@ void Ultrasonic_Detect(Object* object) {
   if (object == 0) return;
   object->range_mm = Ultrasonic_Read();
   object->detected = (object->range_mm < ULTRASONIC_DETECT_RANGE_MM) ? 1U : 0U;
+}
+
+void Deposit_Ultrasonic_Detect(Object* object) {
+  if (object == 0) return;
+  object->range_mm = Ultrasonic_Read();
+  object->detected = (object->range_mm < DEPOSIT_ULTRASONIC_DETECT_RANGE_MM) ? 1U : 0U;
 }

@@ -13,7 +13,7 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/target.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/gcc-arm-none-eabi.cmake)
 
 # Project definition
-project(project)
+project(MP_Kobuki_project)
 
 # Enable CMake support for ASM and C/CPP languages
 enable_language(C ASM)

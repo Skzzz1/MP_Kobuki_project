@@ -14,4 +14,5 @@ typedef struct {
 void Ultrasonic_Init(void);
 uint16_t Ultrasonic_Read(void);
 void Ultrasonic_Detect(Object* object);
+void Deposit_Ultrasonic_Detect(Object* object);
 #endif

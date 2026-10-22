@@ -67,7 +67,7 @@ uint16_t Search_Width_Degrees(const SearchMeasurement *scan) {
 
 int16_t Search_Midpoint_Turn_Degrees(const SearchMeasurement *scan,  int16_t angle) {
   int32_t extra_ticks = Search_Wrap_Angle((int32_t)angle - scan->first_clear_angle);//extra rotation ticks
-  int32_t turn_ticks = -(int32_t)(scan->edge_width_ticks/2) - extra_ticks;
+  int32_t turn_ticks = -(int32_t)(scan->edge_width_ticks/2)- extra_ticks*2;
   return (int16_t)(Search_Wrap_Angle(turn_ticks)/100);//in degrees
 }
 

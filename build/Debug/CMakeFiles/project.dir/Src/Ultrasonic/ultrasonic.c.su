@@ -1,3 +1,4 @@
-/Users/skzzz/Desktop/UniCourse/MP/MP_Kobuki_project/Src/Ultrasonic/ultrasonic.c:10:6:Ultrasonic_Init	4	static
-/Users/skzzz/Desktop/UniCourse/MP/MP_Kobuki_project/Src/Ultrasonic/ultrasonic.c:16:10:Ultrasonic_Read	16	static
-/Users/skzzz/Desktop/UniCourse/MP/MP_Kobuki_project/Src/Ultrasonic/ultrasonic.c:26:6:Ultrasonic_Detect	16	static
+/Users/skzzz/Desktop/UniCourse/MP/MP_Kobuki_project/Src/Ultrasonic/ultrasonic.c:11:6:Ultrasonic_Init	4	static
+/Users/skzzz/Desktop/UniCourse/MP/MP_Kobuki_project/Src/Ultrasonic/ultrasonic.c:17:10:Ultrasonic_Read	16	static
+/Users/skzzz/Desktop/UniCourse/MP/MP_Kobuki_project/Src/Ultrasonic/ultrasonic.c:27:6:Ultrasonic_Detect	16	static
+/Users/skzzz/Desktop/UniCourse/MP/MP_Kobuki_project/Src/Ultrasonic/ultrasonic.c:33:6:Deposit_Ultrasonic_Detect	16	static

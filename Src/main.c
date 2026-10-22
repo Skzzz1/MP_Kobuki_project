@@ -32,17 +32,18 @@
 
 // **TBC**
 #define ITEM_WIDTH_THRES 95             // degrees
-#define SEARCH_DIST_MAX 900             // mm
-#define SEARCH_DIST_MIN 200             // mm
+#define SEARCH_DIST_MAX 1000             // mm
+#define SEARCH_DIST_MIN 75             // mm
 #define SEARCH_CLEAR_CONFIRM_SAMPLES 3  // may change here
-#define BOLLARD_A_MAX 900
-#define BOLLARD_A_MIN 750
-#define BOLLARD_B_MAX 700
+#define BOLLARD_A_MAX 1000
+#define BOLLARD_A_MIN 700
+#define BOLLARD_B_MAX 690
+#define BOLLARD_CENTRE_MAX 690
 #define BOLLARD_B_MIN 200
-#define SEARCH_SPEED 60  // mm/s, TODO: test this
-#define STOP 0           // speed for stopping the kobuki
-#define parking_distance_mm \
-  100  // distance to stop from bollard when depositing object
+#define PATHFIND_SPEED 120  // mm/s while following each straight segment
+#define PATHFIND_CORNER_DEG 90
+#define PATHFIND_CLEAR_SAMPLES 3U
+#define parking_distance_mm 150  // distance to stop from bollard when depositing object
 
 // States
 typedef enum { IDLE, SEARCH, ORIENT, PATHFIND, STORAGE, DEPOSIT } State;
@@ -60,6 +61,7 @@ typedef enum {
 
 typedef enum {
   STORAGE_IDLE,
+  STORAGE_CLEAR_ENDPOINT,
   STORAGE_ORIENT_A,
   STORAGE_ORIENT_B,
   STORAGE_ENTER,
@@ -72,6 +74,7 @@ typedef enum {
   PATHFIND_DRIVE_V,
   PATHFIND_TURN_CW,
   PATHFIND_TURN_ACW,
+  PATHFIND_CLEAR_CORNER,
   PATHFIND_END
 } Pathfind_State;
 
@@ -209,19 +212,16 @@ void searchFSM(void) {
 
       bollard_distance = object.range_mm;
 
-      if (item_found && bollard_distance > SEARCH_DIST_MIN &&
-          bollard_distance < SEARCH_DIST_MAX) {
-        if (bollard_distance > BOLLARD_B_MIN &&
-            bollard_distance < BOLLARD_B_MAX) {
+      if (item_found && bollard_distance > SEARCH_DIST_MIN && bollard_distance < SEARCH_DIST_MAX) {
+        if (bollard_distance > BOLLARD_B_MIN &&bollard_distance < BOLLARD_B_MAX) {
           // if seeing bollard B, need to rotate 90 deg ccw to face path A
           path = PATH_A;
-          Kobuki_Rotate_Angle_Setpoint(kobuki.angle, 85);
+          Kobuki_Rotate_Angle_Setpoint(kobuki.angle, 80);
           current_search_state = SEARCH_ALIGN_A;
-        } else if (bollard_distance > BOLLARD_A_MIN &&
-                   bollard_distance < BOLLARD_A_MAX) {
+        } else if (bollard_distance > BOLLARD_A_MIN && bollard_distance < BOLLARD_A_MAX) {
           // if seeing bollard A, need to rotate 90 deg cw to face path B
           path = PATH_B;
-          Kobuki_Rotate_Angle_Setpoint(kobuki.angle, -85);
+          Kobuki_Rotate_Angle_Setpoint(kobuki.angle, -95);
           current_search_state = SEARCH_ALIGN_B;
         } else {
           current_search_state = SEARCH_IDLE;
@@ -267,157 +267,158 @@ void searchFSM(void) {
 // Drive horizontal, turn ACW, then drive vertical
 // OR Drive vertical, turn CW, then drive horizontal
 
+// Use the turn polarity observed on this robot: right cliff -> negative speed.
+static uint8_t cliff_recovery_requested = 0;
+
+static int16_t Cliff_Correction_Speed(uint8_t cliff) {
+  if ((cliff & 0x04U) && !(cliff & 0x01U)) return -SEARCH_SPEED;//left, clockwise
+  return SEARCH_SPEED;//right or both, anticlockwise
+}
+
 void Pathfind_FSM(void) {
-  // colour code for LEDs:
-  // LED1: yellow for PATH A, red for PATH B
-  // LED2: yellow for horizontal, red for vertical
-  Kobuki_Update_LEDs(led_1, led_2);
+  static uint8_t clear_samples = 0;
+  static bool segment_armed = false;
+  bool cliff_detected = (kobuki.cliff & 0x07U) != 0;
 
   switch (current_pathfind_state) {
-    case (PATHFIND_IDLE):
-      switch (path) {
-        case (PATH_A):
-          current_pathfind_state = PATHFIND_DRIVE_H;
-          // set distance to 1195 mm
-          // start drive
-          Kobuki_Drive_Distance_Setpoint(kobuki.distance, 1195);
-          Kobuki_Drive_Distance(kobuki.distance);
-          led_1 = YELLOW;
-          break;
-
-        case (PATH_B):
-          current_pathfind_state = PATHFIND_DRIVE_V;
-          // set distance to 1395 mm
-          // start drive
-          Kobuki_Drive_Distance_Setpoint(kobuki.distance, 1395);
-          Kobuki_Drive_Distance(kobuki.distance);
-          led_1 = RED;
-          break;
-
-        default:
-          // error
-          break;
-      }
+    case PATHFIND_IDLE:
+      pathfind_complete = false;
+      clear_samples = 0;
+      segment_armed = false;
+      led_1 = (path == PATH_A) ? YELLOW : RED;
+      current_pathfind_state = (path == PATH_A) ? PATHFIND_DRIVE_H
+                                               : PATHFIND_DRIVE_V;
+      // Evaluate the sensors before issuing the first forward command.
+      Kobuki_Drive(STOP);
       break;
 
-    case (PATHFIND_DRIVE_H):
-      led_2 = YELLOW;
-      if (kobuki.distance_complete) {
-        // If the kobuki has driven the distance required
-        switch (path) {
-          case (PATH_A):
-            current_pathfind_state = PATHFIND_TURN_ACW;
-            // turn anticlockwise if on Path A
-            // set rotation to -90 degrees
-            // rotate
-            Kobuki_Rotate_Angle_Setpoint(kobuki.angle, -85);
-            Kobuki_Rotate_Angle(kobuki.angle);
-            break;
-
-          case (PATH_B):
-            current_pathfind_state = PATHFIND_END;
-            // The path has been navigated
-            pathfind_complete = true;
-            break;
-
-          default:
-            // error
-            break;
+    case PATHFIND_DRIVE_H:
+    case PATHFIND_DRIVE_V: {
+      bool horizontal = (current_pathfind_state == PATHFIND_DRIVE_H);
+      bool first_segment = (path == PATH_A) ? horizontal : !horizontal;
+      led_2 = horizontal ? YELLOW : RED;
+      // A side sensor corrects heading; only the centre marks an endpoint.
+      // Require clear ground first so a carried-over cliff cannot skip a leg.
+      if (!segment_armed) {
+        if (cliff_detected) {
+          clear_samples = 0;
+          cliff_recovery_requested = kobuki.cliff & 0x07U;
+          Kobuki_Drive(STOP);
+        } else {
+          Kobuki_Drive(STOP);
+          if (++clear_samples >= PATHFIND_CLEAR_SAMPLES) segment_armed = true;
         }
-      } else {
-        // continue to drive, stay in this state
-        Kobuki_Drive_Distance(kobuki.distance);
         break;
       }
-      break;
-
-    case (PATHFIND_DRIVE_V):
-      led_2 = RED;
-      if (kobuki.distance_complete) {
-        // If the kobuki has driven the distance required
-        switch (path) {
-          case (PATH_B):
-
-            current_pathfind_state = PATHFIND_TURN_CW;
-            // turn anticlockwise if on Path A
-            // set rotation to -90 degrees
-            // rotate
-            Kobuki_Rotate_Angle_Setpoint(kobuki.angle, 85);
-            Kobuki_Rotate_Angle(kobuki.angle);
-            break;
-
-          case (PATH_A):
-            current_pathfind_state = PATHFIND_END;
-            // The path has been navigated
-            pathfind_complete = true;
-            break;
-
-          default:
-            // error
-            break;
+      if (!(kobuki.cliff & 0x02U)) {
+        if (cliff_detected) {
+          cliff_recovery_requested = kobuki.cliff & 0x07U;
+          Kobuki_Drive(STOP);
+        } else {
+          Kobuki_Drive(PATHFIND_SPEED);
         }
-      } else {
-        // continue to drive, stay in this state
-        Kobuki_Drive_Distance(kobuki.distance);
         break;
       }
-      break;
 
-    case (PATHFIND_TURN_ACW):
-      if (kobuki.rotation_complete) {
-        // If kobuki has finished rotating anticlockwise
-        // Next state is always drive vertical (1395 mm)
-        current_pathfind_state = PATHFIND_DRIVE_V;
-        Kobuki_Drive_Distance_Setpoint(kobuki.distance, 1395);
-        Kobuki_Drive_Distance(kobuki.distance);
-
-      } else {
-        // continue to rotate, stay in this state
-        Kobuki_Rotate_Angle(kobuki.angle);
-      }
-      break;
-
-    case (PATHFIND_TURN_CW):
-      if (kobuki.rotation_complete) {
-        // If kobuki has finished rotating clockwise
-        // Next state is always drive horizontal (1195 mm)
-        current_pathfind_state = PATHFIND_DRIVE_H;
-        Kobuki_Drive_Distance_Setpoint(kobuki.distance, 1195);
-        Kobuki_Drive_Distance(kobuki.distance);
-
-      } else {
-        // continue to rotate, stay in this state
-        Kobuki_Rotate_Angle(kobuki.angle);
-      }
-      break;
-    case (PATHFIND_END):
-      // pathfind_complete should trigger a change of state out of this FSM
-      if (!pathfind_complete) {
+      Kobuki_Drive(STOP);
+      if (!first_segment) {
+        current_pathfind_state = PATHFIND_END;
         pathfind_complete = true;
+        break;
       }
+
+      // Positive angles turn left (anticlockwise); negative turn right.
+      int16_t turn = (path == PATH_A) ? -PATHFIND_CORNER_DEG
+                                      : PATHFIND_CORNER_DEG;
+      current_pathfind_state = (path == PATH_A) ? PATHFIND_TURN_ACW
+                                               : PATHFIND_TURN_CW;
+      Kobuki_Rotate_Angle_Setpoint(kobuki.angle, turn);
+      kobuki.rotation_complete = Kobuki_Rotate_Angle(kobuki.angle);
+      break;
+    }
+
+    case PATHFIND_TURN_ACW:
+    case PATHFIND_TURN_CW:
+      kobuki.rotation_complete = Kobuki_Rotate_Angle(kobuki.angle);
+      if (kobuki.rotation_complete) {
+        clear_samples = 0;
+        current_pathfind_state = PATHFIND_CLEAR_CORNER;
+      }
+      break;
+
+    case PATHFIND_CLEAR_CORNER:
+      // Do not drive forward or count this same edge as the second endpoint.
+      // If the corner still lies under a sensor, reverse and turn away.
+      if (cliff_detected) {
+        clear_samples = 0;
+        cliff_recovery_requested = kobuki.cliff & 0x07U;
+        Kobuki_Drive(STOP);
+      } else {
+        Kobuki_Drive(STOP);
+        if (++clear_samples >= PATHFIND_CLEAR_SAMPLES) {
+          segment_armed = true;
+          current_pathfind_state = (path == PATH_A) ? PATHFIND_DRIVE_V
+                                                   : PATHFIND_DRIVE_H;
+        }
+      }
+      break;
+
+    case PATHFIND_END:
+      Kobuki_Drive(STOP);
+      pathfind_complete = true;
       break;
 
     default:
+      Kobuki_Drive(STOP);
+      current_pathfind_state = PATHFIND_IDLE;
       break;
   }
+  Kobuki_Update_LEDs(led_1, led_2);
 }
 
 void storageFSM() {
+  // static uint8_t endpoint_reverse_ticks = 0;
+  static uint8_t endpoint_clear_samples = 0;
+
   switch (current_storage_state) {
     case (STORAGE_IDLE):
+      storage_complete = false;
+      // endpoint_reverse_ticks = 0;
+      endpoint_clear_samples = 0;
+      current_storage_state = STORAGE_CLEAR_ENDPOINT;
+      Kobuki_Drive(STOP);
+      break;
+
+    case (STORAGE_CLEAR_ENDPOINT):
+      // Back off the final path edge
+      if (kobuki.cliff & 0x07U) {
+        endpoint_clear_samples = 0;
+        // if (endpoint_reverse_ticks >= 20) {//20 ticks
+        //   Kobuki_Drive(STOP);
+        //   current_state = IDLE;
+        // } else {
+          // ++endpoint_reverse_ticks;
+        Kobuki_Drive(-100);
+        break;
+      }
+      Kobuki_Drive(STOP);
+      if (++endpoint_clear_samples < PATHFIND_CLEAR_SAMPLES) break;
+
       // Determine path
       switch (path) {
         case (PATH_A):
           current_storage_state = STORAGE_ORIENT_A;
           // rotate clockwise 135 deg
-          Kobuki_Rotate_Angle_Setpoint(kobuki.angle, -135);
+          Kobuki_Rotate_Angle_Setpoint(kobuki.angle, -140);
+          kobuki.rotation_complete = false;
           // might be wrong direction IDK
           break;
 
         case (PATH_B):
           current_storage_state = STORAGE_ORIENT_B;
           // rotate anticlockwise 135 deg
-          Kobuki_Rotate_Angle_Setpoint(kobuki.angle, 135);
+          Kobuki_Rotate_Angle_Setpoint(kobuki.angle, 130);
+          kobuki.rotation_complete = false;
           // might also be wrong
           break;
 
@@ -429,28 +430,29 @@ void storageFSM() {
 
     case (STORAGE_ORIENT_A):
       // rotate CW 135 deg
+      kobuki.rotation_complete = Kobuki_Rotate_Angle(kobuki.angle);
       if (kobuki.rotation_complete == false) {
-        Kobuki_Rotate_Angle(kobuki.angle);
+        break;
       } else {
         current_storage_state = STORAGE_ENTER;
-        // drive 500 mm into storage
-        Kobuki_Drive_Distance_Setpoint(kobuki.distance, 500);
+        // drive 1000 mm into storage
+        Kobuki_Drive_Distance_Setpoint(kobuki.distance, 1000);
       }
       break;
 
     case (STORAGE_ORIENT_B):
       // rotate ACW 135 deg
+      kobuki.rotation_complete = Kobuki_Rotate_Angle(kobuki.angle);
       if (kobuki.rotation_complete == false) {
-        Kobuki_Rotate_Angle(kobuki.angle);
+        break;
       } else {
         current_storage_state = STORAGE_ENTER;
-        // drive 500 mm into storage
-        Kobuki_Drive_Distance_Setpoint(kobuki.distance, 500);
+        // drive 1000 mm into storage
+        Kobuki_Drive_Distance_Setpoint(kobuki.distance, 1000);
       }
       break;
 
     case (STORAGE_ENTER):
-      // drive 500 mm
       if (kobuki.distance_complete == false) {
         Kobuki_Drive_Distance(kobuki.distance);
       } else {
@@ -458,7 +460,7 @@ void storageFSM() {
       }
       break;
     case (STORAGE_END):
-      storage_complete == true;
+      storage_complete = true;
       break;
   }
 }
@@ -466,8 +468,7 @@ void storageFSM() {
 // Deposit FSM
 // Using stages scan, align and approach to deposit the object
 void Deposit_FSM(void) {
-  static SearchMeasurement
-      scan;  // global variable to store search measurement data
+  static SearchMeasurement scan;  // global variable to store search measurement data
 
   switch (current_deposit_state) {
     case DEPOSIT_IDLE:
@@ -496,7 +497,7 @@ void Deposit_FSM(void) {
 
     case DEPOSIT_CHECK_WIDTH: {
       Kobuki_Update_LEDs(GREEN,RED);
-      Ultrasonic_Detect(&object);
+      Deposit_Ultrasonic_Detect(&object);
       item_found = (object.detected != 0);
       int16_t angle = kobuki.angle;
 
@@ -526,13 +527,12 @@ void Deposit_FSM(void) {
         break;
       }
       Kobuki_Rotate(STOP);
-      Ultrasonic_Detect(&object);
-      item_found =
-          (object.detected !=
-           0);  // double check if object is still detected after alignment
+      Deposit_Ultrasonic_Detect(&object);
+      item_found = (object.detected != 0);  // double check if object is still detected after alignment
       bollard_distance = object.range_mm;
-      if (!item_found || bollard_distance >= BOLLARD_B_MAX) {
-        // if detected object out of range, TODO: use B distance temporarily
+      //TODO: check if this distance is okay
+      if (!item_found || bollard_distance >= BOLLARD_CENTRE_MAX) {
+        // if detected object out of range
         is_bollard_faced = false;
         current_deposit_state = DEPOSIT_IDLE;
         break;
@@ -654,38 +654,96 @@ int main(void) {
 }
 
 void TIM3_IRQHandler(void) {
+  static enum { BUMPER_CLEAR, BUMPER_REVERSE, BUMPER_TURN } bumper_recovery = BUMPER_CLEAR;
+  static uint8_t reverse_ticks = 0;
+  static int16_t turn_start_angle = 0;
+  static int16_t turn_speed = 0;
+
   if (TIM3->SR & (1 << 0)) {
     TIM3->SR &= ~(1 << 0);  // Clear update interrupt flag
     Kobuki_Read(&kobuki);
-    Ultrasonic_Detect(&object);
-    Kobuki_Update_LEDs(led_1, led_2);
 
-    // added to stop kobuki if wheel drop
-    if ((kobuki.button & BUTTON_1_STOP) || kobuki.wheeldrop != 0) {
+    bool storage_turning = current_state == STORAGE &&(current_storage_state == STORAGE_ORIENT_A ||
+         current_storage_state == STORAGE_ORIENT_B);
+
+    // Centre bumps may continue a storage orientation; B1 and wheel drop stop.
+    if ((kobuki.button & BUTTON_1_STOP) || kobuki.wheeldrop != 0 ||
+        ((kobuki.bumper & 0x02U) && !storage_turning)) {// if not in storage
       Kobuki_Drive(STOP);
       current_state = IDLE;
+      bumper_recovery = BUMPER_CLEAR;
+      cliff_recovery_requested = 0;
       return;
     }
 
-    // right cliff/bumper
-    if (kobuki.cliff == 0x01 || kobuki.bumper == 0x01) {
-      Kobuki_Drive(STOP);
-      Kobuki_Rotate_Angle_Setpoint(kobuki.angle, 5);
-      while (kobuki.rotation_complete == false) {
-        Kobuki_Rotate_Angle(kobuki.angle);
-      }
-      // left cliff/bumper
-    } else if (kobuki.cliff == 0x02 || kobuki.bumper == 0x02) {
-      Kobuki_Drive(STOP);
-      Kobuki_Rotate_Angle_Setpoint(kobuki.angle, -5);
-      while (kobuki.rotation_complete == false) {
-        Kobuki_Rotate_Angle(kobuki.angle);
-      }
+    if ((kobuki.bumper & 0x02U) && storage_turning) {
+      bumper_recovery = BUMPER_CLEAR;
+      cliff_recovery_requested = 0;
+      kobuki.rotation_complete = Kobuki_Rotate_Angle(kobuki.angle);
+      return;
+    }
 
-      // front cliff/bumper
-    } else if (kobuki.cliff == 0x04 || kobuki.bumper == 0x04) {
-      Kobuki_Drive(STOP);
-      current_state = IDLE;
+    // Recover without changing the interrupted FSM's motion setpoints.
+    switch (bumper_recovery) {
+      case BUMPER_CLEAR:
+        break;
+
+      case BUMPER_REVERSE:
+        if (--reverse_ticks == 0) {
+          turn_start_angle = kobuki.angle;
+          bumper_recovery = BUMPER_TURN;
+          Kobuki_Rotate(turn_speed);
+        } else {
+          Kobuki_Drive(-100);
+        }
+        return;
+
+      case BUMPER_TURN: {
+        int32_t turn =
+            Search_Wrap_Angle((int32_t)kobuki.angle - turn_start_angle);
+
+        // Stop turning after 10 deg, then resume the interrupted FSM.
+        if ((turn_speed > 0 && turn >= 1000) ||
+            (turn_speed < 0 && turn <= -1000)) {
+          Kobuki_Drive(STOP);
+          bumper_recovery = BUMPER_CLEAR;
+        } else {
+          Kobuki_Rotate(turn_speed);
+        }
+        return;
+      }
+    }
+
+    Ultrasonic_Detect(&object);
+    Kobuki_Update_LEDs(led_1, led_2);
+
+    // Cliff flags: right = bit 0, centre = bit 1, left = bit 2.
+    // Use the bumper recovery sequence: reverse about 20 mm, then turn 10 deg.
+    // PATHFIND requests corrections only after checking for a segment endpoint.
+    // Its planned corner turns and centre-cliff endpoints bypass this recovery.
+    bool storage_clearing_endpoint = current_state == STORAGE &&
+        (current_storage_state == STORAGE_IDLE ||
+         current_storage_state == STORAGE_CLEAR_ENDPOINT);
+    if (current_state != IDLE && !storage_clearing_endpoint &&
+        (cliff_recovery_requested ||
+         (current_state != PATHFIND && (kobuki.cliff & 0x07U)))) {
+      turn_speed = Cliff_Correction_Speed(
+          cliff_recovery_requested ? cliff_recovery_requested
+                                            : kobuki.cliff);
+      cliff_recovery_requested = 0;
+      reverse_ticks = 10;
+      bumper_recovery = BUMPER_REVERSE;
+      Kobuki_Drive(-100);
+      return;
+    }
+
+    if (current_state != IDLE && (kobuki.bumper & 0x05U)) {
+      // Right bumper: turn left; left bumper: turn right.
+      turn_speed = (kobuki.bumper & 0x04U) ? -100 : 100;
+      reverse_ticks = 10;  // 10(reverse ticks) x 20 ms at 100 mm/s backs up about 20 mm.
+      bumper_recovery = BUMPER_REVERSE;
+      Kobuki_Drive(-100);
+      return;
     }
 
     // main FSM
@@ -700,6 +758,7 @@ void TIM3_IRQHandler(void) {
           current_deposit_state = DEPOSIT_IDLE;
           search_complete = false;
           pathfind_complete = false;
+          storage_complete = false;
           deposit_complete = false;
           current_state = SEARCH;
         }
@@ -714,6 +773,9 @@ void TIM3_IRQHandler(void) {
         break;
       case PATHFIND:
         if (pathfind_complete) {
+          current_storage_state = STORAGE_IDLE;
+          storage_complete = false;
+          cliff_recovery_requested = 0;
           current_state = STORAGE;
         } else
           Pathfind_FSM();
