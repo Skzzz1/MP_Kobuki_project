@@ -87,14 +87,17 @@ typedef enum {
   DEPOSIT_END
 } Deposit_State;
 
-typedef enum { PATH_A, PATH_B } Path;
+typedef enum { 
+  PATH_A, 
+  PATH_B 
+} Path;
 
 volatile bool item_found;        // Y when object is detected in sensor range
 volatile uint16_t item_width;    // to calculate midpoint of object
 volatile bool is_bollard_faced;  // Y when facing bollard centre
 volatile uint16_t bollard_distance;  // distance of bollard
-volatile bool path_a_aligned;        // Y if facing bollard B
-volatile bool path_b_aligned;        // Y if facing bollard A
+// volatile bool path_a_aligned;        // Y if facing bollard B
+// volatile bool path_b_aligned;        // Y if facing bollard A
 
 // Structs
 Kobuki_Typedef kobuki;
@@ -129,6 +132,14 @@ void idleFSM() { Kobuki_Update_LEDs(RED, RED); }
 //   // - Repeat until object found
 // }
 
+// Use the turn polarity observed on this robot: right cliff -> negative speed.
+static uint8_t cliff_recovery_requested = 0;
+
+static int16_t Cliff_Correction_Speed(uint8_t cliff) {
+  if ((cliff & 0x04U) && !(cliff & 0x01U)) return -SEARCH_SPEED;//left, clockwise
+  return SEARCH_SPEED;//right or both, anticlockwise
+}
+
 void searchFSM(void) {
   static SearchMeasurement
       scan;  // global variable to store search measurement data
@@ -137,23 +148,23 @@ void searchFSM(void) {
     case SEARCH_IDLE:
       // Initialize search variables
       item_found = false;
-      item_width = 0;
       is_bollard_faced = false;
+      // path_a_aligned = false;
+      // path_b_aligned = false;
+      item_width = 0;
       bollard_distance = 0;
-      path_a_aligned = false;
-      path_b_aligned = false;
       Search_Reset(&scan);
       current_search_state = SEARCH_SCAN;
-
-      Kobuki_Rotate(SEARCH_SPEED);
+      // Kobuki_Rotate(SEARCH_SPEED);
       break;
 
     case SEARCH_SCAN:
       // Continuously rotate and scan for an object
       Ultrasonic_Detect(&object);
       item_found = object.detected != 0;
-      if (Search_Find_Leading_Edge(&scan, item_found, kobuki.angle,
-                                   SEARCH_CLEAR_CONFIRM_SAMPLES)) {
+      bool leading_edge_found = Search_Find_Leading_Edge(&scan, item_found, kobuki.angle,
+                                   SEARCH_CLEAR_CONFIRM_SAMPLES);
+      if (leading_edge_found) {
         current_search_state = SEARCH_CHECK_WIDTH;
       }
       Kobuki_Update_LEDs(GREEN, GREEN);
@@ -166,15 +177,17 @@ void searchFSM(void) {
       Ultrasonic_Detect(&object);
       item_found = object.detected != 0;
       int16_t angle = kobuki.angle;
+      bool trailing_edge_found = Search_Find_Trailing_Edge(&scan, item_found, angle,
+                                     SEARCH_CLEAR_CONFIRM_SAMPLES);
 
-      if (!Search_Find_Trailing_Edge(&scan, item_found, angle,
-                                     SEARCH_CLEAR_CONFIRM_SAMPLES)) {
+      if (!trailing_edge_found) {
         Kobuki_Rotate(SEARCH_SPEED);
         break;
       }
 
       item_width = Search_Width_Degrees(&scan);
-      if (Search_Width_Valid(&scan, ITEM_WIDTH_THRES)) {
+      bool width_valid = Search_Width_Valid(&scan, ITEM_WIDTH_THRES);
+      if (width_valid) {
         Kobuki_Rotate(STOP);
         Kobuki_Rotate_Angle_Setpoint(
             angle, Search_Midpoint_Turn_Degrees(&scan, angle));
@@ -189,8 +202,6 @@ void searchFSM(void) {
       break;
     }
 
-    // TODO: maybe add a timeout for the search, if it takes too long, go to
-    // idle?
     case SEARCH_ALIGN_BOLLARD:
       Kobuki_Update_LEDs(RED, GREEN);
 
@@ -240,8 +251,8 @@ void searchFSM(void) {
       if (kobuki.rotation_complete) {
         Kobuki_Rotate(STOP);
         // determine which path is aligned based on the current search state
-        path_a_aligned = (current_search_state == SEARCH_ALIGN_A);
-        path_b_aligned = (current_search_state == SEARCH_ALIGN_B);
+        // path_a_aligned = (current_search_state == SEARCH_ALIGN_A);
+        // path_b_aligned = (current_search_state == SEARCH_ALIGN_B);
         current_search_state = END;
       } else {
         Kobuki_Rotate_Angle(kobuki.angle);
@@ -251,8 +262,8 @@ void searchFSM(void) {
     case END:
       Kobuki_Rotate(STOP);
       search_complete = true;
-      current_search_state = SEARCH_IDLE;
-      current_state = PATHFIND;
+      current_search_state = SEARCH_IDLE;//safety, to make sure search is reset
+      // current_state = PATHFIND;
       break;
 
     default:
@@ -267,14 +278,6 @@ void searchFSM(void) {
 // Drive horizontal, turn ACW, then drive vertical
 // OR Drive vertical, turn CW, then drive horizontal
 
-// Use the turn polarity observed on this robot: right cliff -> negative speed.
-static uint8_t cliff_recovery_requested = 0;
-
-static int16_t Cliff_Correction_Speed(uint8_t cliff) {
-  if ((cliff & 0x04U) && !(cliff & 0x01U)) return -SEARCH_SPEED;//left, clockwise
-  return SEARCH_SPEED;//right or both, anticlockwise
-}
-
 void Pathfind_FSM(void) {
   static uint8_t clear_samples = 0;
   static bool segment_armed = false;
@@ -286,7 +289,7 @@ void Pathfind_FSM(void) {
       clear_samples = 0;
       segment_armed = false;
       led_1 = (path == PATH_A) ? YELLOW : RED;
-      current_pathfind_state = (path == PATH_A) ? PATHFIND_DRIVE_H
+      current_pathfind_state = (path == PATH_B) ? PATHFIND_DRIVE_H
                                                : PATHFIND_DRIVE_V;
       // Evaluate the sensors before issuing the first forward command.
       Kobuki_Drive(STOP);
@@ -295,7 +298,7 @@ void Pathfind_FSM(void) {
     case PATHFIND_DRIVE_H:
     case PATHFIND_DRIVE_V: {
       bool horizontal = (current_pathfind_state == PATHFIND_DRIVE_H);
-      bool first_segment = (path == PATH_A) ? horizontal : !horizontal;
+      bool first_segment = (path == PATH_B) ? horizontal : !horizontal;
       led_2 = horizontal ? YELLOW : RED;
       // A side sensor corrects heading; only the centre marks an endpoint.
       // Require clear ground first so a carried-over cliff cannot skip a leg.
@@ -330,7 +333,7 @@ void Pathfind_FSM(void) {
       // Positive angles turn left (anticlockwise); negative turn right.
       int16_t turn = (path == PATH_A) ? -PATHFIND_CORNER_DEG
                                       : PATHFIND_CORNER_DEG;
-      current_pathfind_state = (path == PATH_A) ? PATHFIND_TURN_ACW
+      current_pathfind_state = (path == PATH_B) ? PATHFIND_TURN_ACW
                                                : PATHFIND_TURN_CW;
       Kobuki_Rotate_Angle_Setpoint(kobuki.angle, turn);
       kobuki.rotation_complete = Kobuki_Rotate_Angle(kobuki.angle);
@@ -717,41 +720,40 @@ void TIM3_IRQHandler(void) {
       case IDLE:
         // initialize all states
         Kobuki_Drive(STOP);
+        current_search_state = SEARCH_IDLE;
+        current_pathfind_state = PATHFIND_IDLE;
+        current_storage_state = STORAGE_IDLE;
+        current_deposit_state = DEPOSIT_IDLE;
+        search_complete = false;
+        pathfind_complete = false;
+        storage_complete = false;
+        deposit_complete = false;
+
         if (kobuki.button & BUTTON_0_START) {
-          current_search_state = SEARCH_IDLE;
-          current_pathfind_state = PATHFIND_IDLE;
-          current_storage_state = STORAGE_IDLE;
-          current_deposit_state = DEPOSIT_IDLE;
-          search_complete = false;
-          pathfind_complete = false;
-          storage_complete = false;
-          deposit_complete = false;
           current_state = SEARCH;
         }
         break;
       case SEARCH:
-        if (!search_complete) {
-          searchFSM();
-        } else
-          current_state = PATHFIND;
+        searchFSM();
+        if (search_complete) current_state = PATHFIND;
         // TODO: check if double setting current_state to PATHFIND is fine, this
         // is the same issue with other states
         break;
       case PATHFIND:
         if (pathfind_complete) {
+          //TODO
           current_storage_state = STORAGE_IDLE;
           storage_complete = false;
           cliff_recovery_requested = 0;
           current_state = STORAGE;
-        } else
-          Pathfind_FSM();
+        }
+        Pathfind_FSM();
         break;
       case STORAGE:
-        if (!storage_complete) {
-          storageFSM();
-        } else {
+        if (storage_complete) {
           current_state = DEPOSIT;
         }
+        storageFSM();
         break;
       case DEPOSIT:
         if (deposit_complete) {
