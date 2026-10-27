@@ -452,6 +452,7 @@ void storageFSM() {
       break;
     case (STORAGE_END):
       storage_complete = true;
+      current_storage_state = STORAGE_IDLE;
       break;
   }
 }
