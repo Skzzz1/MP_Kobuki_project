@@ -394,7 +394,7 @@ void storageFSM() {
 
     case (STORAGE_CLEAR_ENDPOINT):
       // Back off the final path edge
-      if (kobuki.cliff & 0x07U) {
+      if (kobuki.cliff & 0x07U) { 
         endpoint_clear_samples = 0;
         // if (endpoint_reverse_ticks >= 20) {//20 ticks
         //   Kobuki_Drive(STOP);
@@ -412,7 +412,7 @@ void storageFSM() {
         case (PATH_A):
           current_storage_state = STORAGE_ORIENT_A;
           // rotate clockwise 135 deg
-          Kobuki_Rotate_Angle_Setpoint(kobuki.angle, -140);
+          Kobuki_Rotate_Angle_Setpoint(kobuki.angle, -140);    // rotate CW 135 deg
           kobuki.rotation_complete = false;
           // might be wrong direction IDK
           break;
@@ -420,7 +420,7 @@ void storageFSM() {
         case (PATH_B):
           current_storage_state = STORAGE_ORIENT_B;
           // rotate anticlockwise 135 deg
-          Kobuki_Rotate_Angle_Setpoint(kobuki.angle, 130);
+          Kobuki_Rotate_Angle_Setpoint(kobuki.angle, 130);       // rotate ACW 135 deg
           kobuki.rotation_complete = false;
           // might also be wrong
           break;
@@ -432,19 +432,7 @@ void storageFSM() {
       break;
 
     case (STORAGE_ORIENT_A):
-      // rotate CW 135 deg
-      kobuki.rotation_complete = Kobuki_Rotate_Angle(kobuki.angle);
-      if (kobuki.rotation_complete == false) {
-        break;
-      } else {
-        current_storage_state = STORAGE_ENTER;
-        // drive 1000 mm into storage
-        Kobuki_Drive_Distance_Setpoint(kobuki.distance, 1000);
-      }
-      break;
-
     case (STORAGE_ORIENT_B):
-      // rotate ACW 135 deg
       kobuki.rotation_complete = Kobuki_Rotate_Angle(kobuki.angle);
       if (kobuki.rotation_complete == false) {
         break;
