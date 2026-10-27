@@ -369,6 +369,7 @@ void Pathfind_FSM(void) {
     case PATHFIND_END:
       Kobuki_Drive(STOP);
       pathfind_complete = true;
+      current_pathfind_state = PATHFIND_IDLE
       break;
 
     default:
