@@ -38,5 +38,5 @@ uint16_t Search_Width_Degrees(const SearchMeasurement *scan);
 //return angle of rotation to midpoint of object, including extra rotation during confirmation of clear space
 int16_t Search_Midpoint_Turn_Degrees(const SearchMeasurement *scan,int16_t angle);
 
-//Resumes scanning for an object after a confirmed clear space
+//Resumes scanning for an object after a confirmed clear space, delete
 void Search_Resume_Scan(SearchMeasurement *scan);

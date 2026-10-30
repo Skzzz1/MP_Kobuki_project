@@ -32,6 +32,7 @@
 
 // **TBC**
 #define ITEM_WIDTH_THRES 100             // degrees
+#define ITEM_WIDTH_THRES_DEPOSIT 120             // degrees
 #define SEARCH_DIST_MAX 1000             // mm
 #define SEARCH_DIST_MIN 75             // mm
 #define SEARCH_CLEAR_CONFIRM_SAMPLES 3  // may change here
@@ -289,17 +290,31 @@ void Pathfind_FSM(void) {
       clear_samples = 0;
       segment_armed = false;
       led_1 = (path == PATH_A) ? YELLOW : RED;
-      current_pathfind_state = (path == PATH_B) ? PATHFIND_DRIVE_H
-                                               : PATHFIND_DRIVE_V;
+      current_pathfind_state = (path == PATH_A) ? PATHFIND_DRIVE_V : PATHFIND_DRIVE_H;
       // Evaluate the sensors before issuing the first forward command.
       Kobuki_Drive(STOP);
       break;
 
     case PATHFIND_DRIVE_H:
     case PATHFIND_DRIVE_V: {
-      bool horizontal = (current_pathfind_state == PATHFIND_DRIVE_H);
-      bool first_segment = (path == PATH_B) ? horizontal : !horizontal;
+      bool horizontal;
+
+      if(current_pathfind_state == PATHFIND_DRIVE_H) {
+        horizontal = true;
+      } else horizontal = false;
+
       led_2 = horizontal ? YELLOW : RED;
+
+      bool first_segment;
+
+      if(path == PATH_A) {
+        if(horizontal) first_segment = false;
+        else first_segment = true;//2nd 
+      }  else {
+        //PATH_B
+        if(horizontal) first_segment = true;
+        else first_segment = false;//2nd
+      }
       // A side sensor corrects heading; only the centre marks an endpoint.
       // Require clear ground first so a carried-over cliff cannot skip a leg.
       if (!segment_armed) {
@@ -324,6 +339,7 @@ void Pathfind_FSM(void) {
       }
 
       Kobuki_Drive(STOP);
+
       if (!first_segment) {
         current_pathfind_state = PATHFIND_END;
         pathfind_complete = true;
@@ -360,8 +376,8 @@ void Pathfind_FSM(void) {
         Kobuki_Drive(STOP);
         if (++clear_samples >= PATHFIND_CLEAR_SAMPLES) {
           segment_armed = true;
-          current_pathfind_state = (path == PATH_A) ? PATHFIND_DRIVE_V
-                                                   : PATHFIND_DRIVE_H;
+          current_pathfind_state = (path == PATH_A) ? PATHFIND_DRIVE_H
+                                                   : PATHFIND_DRIVE_V;
         }
       }
       break;
@@ -369,7 +385,7 @@ void Pathfind_FSM(void) {
     case PATHFIND_END:
       Kobuki_Drive(STOP);
       pathfind_complete = true;
-      current_pathfind_state = PATHFIND_IDLE
+      current_pathfind_state = PATHFIND_IDLE;
       break;
 
     default:
@@ -413,7 +429,7 @@ void storageFSM() {
         case (PATH_A):
           current_storage_state = STORAGE_ORIENT_A;
           // rotate clockwise 135 deg
-          Kobuki_Rotate_Angle_Setpoint(kobuki.angle, -140);    // rotate CW 135 deg
+          Kobuki_Rotate_Angle_Setpoint(kobuki.angle, -138);    // rotate CW 135 deg
           kobuki.rotation_complete = false;
           // might be wrong direction IDK
           break;
@@ -421,7 +437,7 @@ void storageFSM() {
         case (PATH_B):
           current_storage_state = STORAGE_ORIENT_B;
           // rotate anticlockwise 135 deg
-          Kobuki_Rotate_Angle_Setpoint(kobuki.angle, 130);       // rotate ACW 135 deg
+          Kobuki_Rotate_Angle_Setpoint(kobuki.angle, 133);       // rotate ACW 135 deg
           kobuki.rotation_complete = false;
           // might also be wrong
           break;
@@ -440,7 +456,7 @@ void storageFSM() {
       } else {
         current_storage_state = STORAGE_ENTER;
         // drive 1000 mm into storage
-        Kobuki_Drive_Distance_Setpoint(kobuki.distance, 1000);
+        Kobuki_Drive_Distance_Setpoint(kobuki.distance, 900);
       }
       break;
 
@@ -494,10 +510,9 @@ void Deposit_FSM(void) {
       item_found = (object.detected != 0);
       int16_t angle = kobuki.angle;
 
-      if (Search_Find_Trailing_Edge(&scan, item_found, angle,
-                                    SEARCH_CLEAR_CONFIRM_SAMPLES)) {
+      if (Search_Find_Trailing_Edge(&scan, item_found, angle,SEARCH_CLEAR_CONFIRM_SAMPLES)) {
         item_width = Search_Width_Degrees(&scan);
-        if (Search_Width_Valid(&scan, ITEM_WIDTH_THRES)) {
+        if (Search_Width_Valid(&scan, ITEM_WIDTH_THRES_DEPOSIT)) {
           Kobuki_Rotate(STOP);
           Kobuki_Rotate_Angle_Setpoint(
               angle, Search_Midpoint_Turn_Degrees(&scan, angle));

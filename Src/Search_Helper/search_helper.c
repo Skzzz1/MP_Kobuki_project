@@ -18,6 +18,7 @@ bool Search_Confirm_Clear(SearchMeasurement *scan, uint8_t required_samples) {
 // Ignore an initial partial object; start measuring after confirmed clear space.
 bool Search_Find_Leading_Edge(SearchMeasurement *scan,bool detected, int16_t angle,uint8_t required_samples) {
   if (!detected) {//item not found
+    //confirm seeing no object
     if (Search_Confirm_Clear(scan, required_samples)) scan->clear_seen = true;
   } else if (scan->clear_seen) {
     //initialize the scan measurement for the leading edge
@@ -71,6 +72,7 @@ int16_t Search_Midpoint_Turn_Degrees(const SearchMeasurement *scan,  int16_t ang
   return (int16_t)(Search_Wrap_Angle(turn_ticks)/100);//in degrees
 }
 
+//delete
 void Search_Resume_Scan(SearchMeasurement *scan) {
   scan->clear_seen = true;
   scan->clear_samples = 0;

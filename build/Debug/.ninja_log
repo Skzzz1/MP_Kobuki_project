@@ -11,3 +11,18 @@
 2	64	1792989592798631587	build.ninja	5cc71edb41288674
 2	64	1792544375334435380	/Users/willlatter/Library/CloudStorage/OneDrive-AdelaideUniversity/Year 3/Sem 2/Microcontroller Programming/MP_Kobuki_project/build/Debug/cmake_install.cmake	5cc71edb41288674
 2	78	1792564357235216724	CMakeFiles/project.dir/Src/Search_Helper/search_helper.c.obj	932be9f5fc9fa753
+2	176	1793070136103075830	CMakeFiles/project.dir/Src/main.c.obj	1225d2fe4982cee7
+176	232	1793070136277712782	project.elf	abe6e755e7a2b8c8
+1	158	1793071980940520577	CMakeFiles/project.dir/Src/main.c.obj	1225d2fe4982cee7
+158	201	1793071981097365384	project.elf	abe6e755e7a2b8c8
+2	154	1793072606896394298	CMakeFiles/project.dir/Src/main.c.obj	1225d2fe4982cee7
+154	200	1793072607048685413	project.elf	abe6e755e7a2b8c8
+2	148	1793075037845546229	CMakeFiles/project.dir/Src/main.c.obj	1225d2fe4982cee7
+148	196	1793075037991863214	project.elf	abe6e755e7a2b8c8
+2	87	1793077058302768292	CMakeFiles/project.dir/Src/Search_Helper/search_helper.c.obj	932be9f5fc9fa753
+2	140	1793077058302409046	CMakeFiles/project.dir/Src/main.c.obj	1225d2fe4982cee7
+140	200	1793077058440666680	project.elf	abe6e755e7a2b8c8
+2	146	1793080802452122721	CMakeFiles/project.dir/Src/main.c.obj	1225d2fe4982cee7
+146	191	1793080802596247955	project.elf	abe6e755e7a2b8c8
+2	172	1793081332270809019	CMakeFiles/project.dir/Src/main.c.obj	1225d2fe4982cee7
+172	244	1793081332440512864	project.elf	abe6e755e7a2b8c8
