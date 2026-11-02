@@ -32,7 +32,7 @@
 
 // **TBC**
 #define ITEM_WIDTH_THRES 100             // degrees
-#define ITEM_WIDTH_THRES_DEPOSIT 120             // degrees
+#define ITEM_WIDTH_THRES_DEPOSIT 100             // degrees
 #define SEARCH_DIST_MAX 1000             // mm
 #define SEARCH_DIST_MIN 75             // mm
 #define SEARCH_CLEAR_CONFIRM_SAMPLES 3  // may change here
@@ -376,8 +376,7 @@ void Pathfind_FSM(void) {
         Kobuki_Drive(STOP);
         if (++clear_samples >= PATHFIND_CLEAR_SAMPLES) {
           segment_armed = true;
-          current_pathfind_state = (path == PATH_A) ? PATHFIND_DRIVE_H
-                                                   : PATHFIND_DRIVE_V;
+          current_pathfind_state = (path == PATH_A) ? PATHFIND_DRIVE_H : PATHFIND_DRIVE_V;
         }
       }
       break;
@@ -536,10 +535,10 @@ void Deposit_FSM(void) {
       }
       Kobuki_Rotate(STOP);
       Deposit_Ultrasonic_Detect(&object);
-      item_found = (object.detected != 0);  // double check if object is still detected after alignment
+      // item_found = (object.detected != 0);  // double check if object is still detected after alignment
       bollard_distance = object.range_mm;
       //TODO: check if this distance is okay
-      if (!item_found || bollard_distance >= BOLLARD_CENTRE_MAX) {
+      if ( bollard_distance >= BOLLARD_CENTRE_MAX) {//!item_found ||
         // if detected object out of range
         is_bollard_faced = false;
         current_deposit_state = DEPOSIT_IDLE;
@@ -553,8 +552,7 @@ void Deposit_FSM(void) {
         deposit_complete = true;
         break;
       }
-      Kobuki_Drive_Distance_Setpoint(
-          kobuki.distance, (int16_t)(bollard_distance - parking_distance_mm));
+      Kobuki_Drive_Distance_Setpoint(kobuki.distance, (int16_t)(bollard_distance - parking_distance_mm));
       kobuki.distance_complete = false;
       current_deposit_state = DEPOSIT_APPROACH;
       Kobuki_Drive_Distance(kobuki.distance);
@@ -566,17 +564,11 @@ void Deposit_FSM(void) {
       Deposit_Ultrasonic_Detect(&object);
       item_found = (object.detected != 0);
       bollard_distance = object.range_mm;
-      if (kobuki.distance_complete ||
-          (item_found && bollard_distance <= parking_distance_mm)) {
+      if (kobuki.distance_complete || (item_found && bollard_distance <= parking_distance_mm)) {
         Kobuki_Drive(STOP);
         current_deposit_state = DEPOSIT_END;
         deposit_complete = true;
         break;
-      } else if (!item_found) {
-        // refind the bollard if lost during approach
-        Kobuki_Drive(STOP);
-        is_bollard_faced = false;
-        current_deposit_state = DEPOSIT_IDLE;
       } else {
         // Keep the encoder target set during alignment; ultrasonic range can
         // stop us early.
@@ -695,14 +687,14 @@ void TIM3_IRQHandler(void) {
     // Use the bumper recovery sequence: reverse about 20 mm, then turn 10 deg.
     // PATHFIND requests corrections only after checking for a segment endpoint.
     // Its planned corner turns and centre-cliff endpoints bypass this recovery.
-    bool storage_clearing_endpoint = current_state == STORAGE &&
+    bool storage_clearing_endpoint = (current_state == STORAGE) &&
         (current_storage_state == STORAGE_IDLE ||
          current_storage_state == STORAGE_CLEAR_ENDPOINT);
+
     if (current_state != IDLE && !storage_clearing_endpoint &&
         (cliff_recovery_requested ||
          (current_state != PATHFIND && (kobuki.cliff & 0x07U)))) {
-      turn_speed = Cliff_Correction_Speed(
-          cliff_recovery_requested ? cliff_recovery_requested
+      turn_speed = Cliff_Correction_Speed(cliff_recovery_requested ? cliff_recovery_requested
                                             : kobuki.cliff);
       cliff_recovery_requested = 0;
       reverse_ticks = 10;

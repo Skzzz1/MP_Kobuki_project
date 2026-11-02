@@ -5,7 +5,7 @@
 
 #define ULTRASONIC_DETECT_RANGE_MM ((uint16_t)1000U)
 #define ULTRASONIC_MAX_RANGE_MM ((uint16_t)5000U)
-#define DEPOSIT_ULTRASONIC_DETECT_RANGE_MM ((uint16_t)700U)
+#define DEPOSIT_ULTRASONIC_DETECT_RANGE_MM ((uint16_t)600U)
 
 typedef struct {
   uint8_t detected;
