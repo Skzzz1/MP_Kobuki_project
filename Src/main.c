@@ -94,6 +94,7 @@ typedef enum {
   DEPOSIT_SCAN,
   DEPOSIT_CHECK_WIDTH,
   DEPOSIT_ALIGN,
+  DEPOSIT_CHECK_DISTANCE,
   DEPOSIT_APPROACH,
   DEPOSIT_END
 } Deposit_State_t;
@@ -113,9 +114,7 @@ typedef enum {
 } Bumper_Recovery_State_t;
 
 // Global variables
-volatile bool item_found;             // whether object is detected in sensor range
 volatile uint16_t item_width;         // to calculate midpoint of object
-volatile bool is_bollard_faced;       // whether kobuki is facing bollard centre
 volatile uint16_t bollard_distance;   // distance between kobuki sensor and bollard
 volatile uint8_t cliff_recovery_flags = 0; // cliff flags requested by FSMs to trigger recovery
 volatile uint8_t reverse_ticks = 0;     // number of ticks to reverse for bumper recovery
@@ -145,7 +144,7 @@ volatile bool deposit_complete = false;
 
 // Search FSM
 // Scans for an object, aligns to it, and checks its distance to determine which path to take
-void searchFSM(void) {
+void Search_FSM(void) {
   static SearchMeasurement scan;  // global variable to store search measurement data, struct defined in search_helper.h
 
   switch (current_search_state) {
@@ -236,32 +235,6 @@ void searchFSM(void) {
       } 
       current_search_state = SEARCH_IDLE;
       break;
-    
-
-      // // If the object is detected and the distance is within the specified range, determine which path to take based on the distance to the bollard
-      // if (object.detected && bollard_distance > SEARCH_DIST_MIN && bollard_distance < SEARCH_DIST_MAX) {
-      //   if (bollard_distance > BOLLARD_B_MIN &&bollard_distance < BOLLARD_B_MAX) {
-      //     // if seeing bollard B, need to rotate 90 deg ccw to face path A
-      //     path = PATH_A;
-      //     Kobuki_Rotate_Angle_Setpoint(kobuki.angle, 80);
-      //     current_search_state = SEARCH_ALIGN;
-      //   } else if (bollard_distance > BOLLARD_A_MIN && bollard_distance < BOLLARD_A_MAX) {
-      //     // if seeing bollard A, need to rotate 90 deg cw to face path B
-      //     path = PATH_B;
-      //     Kobuki_Rotate_Angle_Setpoint(kobuki.angle, -95);
-      //     current_search_state = SEARCH_ALIGN;
-      //   } else {
-      //     // If the distance is not within the specified range, return to the idle state
-      //     current_search_state = SEARCH_IDLE;
-      //     break;
-      //   }
-      //   is_bollard_faced = true; //I dont know why this would be set, seems redundant?
-      //   kobuki.rotation_complete = false;//mark align as not complete yet // to go to what state?
-      // } else {
-      //   current_search_state = SEARCH_IDLE;
-      // }
-      // break;
-    
 
     // Align to the bollard based on the determined path
     case SEARCH_ALIGN:
@@ -370,16 +343,14 @@ void Pathfind_FSM(void) {
 
 // Storage FSM
 // Backs off the final path edge, rotates to face the storage area, and drives into it
-void storageFSM() {
+void Storage_FSM() {
   //number of samples to confirm clear detection
   static uint8_t storage_clear_samples = 0;
 
   switch (current_storage_state) {
     case (STORAGE_IDLE):
       // Initialize storage variables
-      storage_complete = false;
       storage_clear_samples = 0;
-      Kobuki_Drive(STOP);
       current_storage_state = STORAGE_CLEAR_ENDPOINT;
       break;
 
@@ -396,31 +367,25 @@ void storageFSM() {
       // Determine path
       switch (path) {
         case (PATH_A):
-          current_storage_state = STORAGE_ORIENT_A;
           // rotate clockwise 135 deg,adjusted to 138 deg to account for overshoot
           Kobuki_Rotate_Angle_Setpoint(kobuki.angle, -138);    // rotate CW 135 deg
-          kobuki.rotation_complete = false;
           break;
 
         case (PATH_B):
           current_storage_state = STORAGE_ORIENT_B;
           // rotate anticlockwise 135 deg, adjusted to 133 deg to account for overshoot
           Kobuki_Rotate_Angle_Setpoint(kobuki.angle, 133);       // rotate ACW 135 deg
-          kobuki.rotation_complete = false;
-          break;
-
-        default:
-          // error, should not happen
-          Kobuki_Drive(STOP);
-          current_storage_state = STORAGE_IDLE;
           break;
       }
+
+      kobuki.rotation_complete = false;
+      current_storage_state = STORAGE_ORIENT;
+
       break;
     
     // Orient to face the storage area based on the determined path
     //A and B are the same logic, just different rotation direction, using different names for better readability
-    case (STORAGE_ORIENT_A):
-    case (STORAGE_ORIENT_B):
+    case (STORAGE_ORIENT):
       kobuki.rotation_complete = Kobuki_Rotate_Angle(kobuki.angle);
       if (kobuki.rotation_complete) {
         // drive 900 mm into storage, this distance was measured physically to ensure kobuki is fully inside the storage area
@@ -453,9 +418,6 @@ void Deposit_FSM(void) {
   switch (current_deposit_state) {
     case (DEPOSIT_IDLE):
       // Initialize deposit variables
-      deposit_complete = false;
-      item_found = false;
-      is_bollard_faced = false;
       bollard_distance = 0;
       Search_Reset(&scan);
 
@@ -467,7 +429,8 @@ void Deposit_FSM(void) {
       //  rotate and scan for an object
 
       Deposit_Ultrasonic_Detect(&object);
-      if (Search_Find_Leading_Edge(&scan, object.detected, kobuki.angle,SEARCH_CLEAR_CONFIRM_SAMPLES)) {
+      bool leading_edge_found = Search_Find_Leading_Edge(&scan, object.detected, kobuki.angle,SEARCH_CLEAR_CONFIRM_SAMPLES);
+      if (leading_edge_found) {
         // If the leading edge is found, move to the next stage to check the width of the detected object
         current_deposit_state = DEPOSIT_CHECK_WIDTH;
       }
@@ -481,9 +444,11 @@ void Deposit_FSM(void) {
       Deposit_Ultrasonic_Detect(&object);
       int16_t angle = kobuki.angle;
       // If the trailing edge is found, check if the width is valid and align to the midpoint of the object
-      if (Search_Find_Trailing_Edge(&scan, object.detected, angle,SEARCH_CLEAR_CONFIRM_SAMPLES)) {
+      bool trailing_edge_found = Search_Find_Trailing_Edge(&scan, object.detected, angle,SEARCH_CLEAR_CONFIRM_SAMPLES);
+      if (trailing_edge_found) {
         item_width = Search_Width_Degrees(&scan);
-        if (Search_Width_Valid(&scan, ITEM_WIDTH_THRES_DEPOSIT)) {
+        bool width_valid = Search_Width_Valid(&scan, ITEM_WIDTH_THRES_DEPOSIT);
+        if (width_valid) {
           // If the width is valid, align to the midpoint of the detected object
           Kobuki_Rotate(STOP);//stop rotation to align
           Kobuki_Rotate_Angle_Setpoint(angle, Search_Midpoint_Turn_Degrees(&scan, angle));
@@ -499,27 +464,24 @@ void Deposit_FSM(void) {
     }
 
     case (DEPOSIT_ALIGN):
-      // Rotate to align to the midpoint of the detected object
-
       kobuki.rotation_complete = Kobuki_Rotate_Angle(kobuki.angle);
-      if (!kobuki.rotation_complete) {
-        // If the rotation is not complete, keep rotating to align to the midpoint of the detected object
+      if (kobuki.rotation_complete) {
+        Kobuki_Rotate(STOP);
+        current_deposit_state = DEPOSIT_CHECK_DISTANCE;
         break;
       }
-      Kobuki_Rotate(STOP);
+      // If the rotation is not complete, keep rotating to align to the midpoint of the detected object
+    case (DEPOSIT_CHECK_DISTANCE):
       Deposit_Ultrasonic_Detect(&object);
       bollard_distance = object.range_mm;
       if ( bollard_distance >= BOLLARD_CENTRE_MAX) {
         // if detected object out of range, return to idle state
-        is_bollard_faced = false;
         current_deposit_state = DEPOSIT_IDLE;
         break;
       }
       // If the detected object is within range, set the distance setpoint to approach the bollard
-      is_bollard_faced = true;
       if (bollard_distance <= PARKING_DISTANCE_MM) {
         // if already within parking distance, stop and mark deposit as complete
-        Kobuki_Drive(STOP);
         current_deposit_state = DEPOSIT_END;
         deposit_complete = true;
         break;
@@ -535,8 +497,6 @@ void Deposit_FSM(void) {
       bollard_distance = object.range_mm;
       //if distance complete or object detected and within parking distance, stop and mark deposit as complete
       if (kobuki.distance_complete || (object.detected && bollard_distance <= PARKING_DISTANCE_MM)) {
-        Kobuki_Drive(STOP);
-        deposit_complete = true;
         current_deposit_state = DEPOSIT_END;
         break;
       } else {
@@ -560,7 +520,7 @@ void Deposit_FSM(void) {
 // Bumper recovery FSM
 // Backs off the bumper, then turns away from the obstacle
 // uses reverse_ticks to determine how long to reverse, and turn_speed to determine the speed and direction of the turn
-void bumper_recovery_FSM() {
+void Bumper_Recovery_FSM() {
   // Recover without changing the interrupted FSM's motion setpoints.
   switch (current_bumper_recovery_state) {
     case BUMPER_REVERSE:
@@ -616,35 +576,35 @@ void main_FSM() {
       break;
     case SEARCH:
       if (search_complete) {
+        search_complete = false; //clear flag
         current_state = PATHFIND;
         current_pathfind_state = PATHFIND_IDLE;
-        pathfind_complete = false;
         break;
       }
-      searchFSM();
+      Search_FSM();
       break;
     case PATHFIND:
       if (pathfind_complete) {
+        pathfind_complete=false; //clear flag
         cliff_recovery_flags = 0;//clear cliff recovery flags to avoid triggering recovery in storage FSM
         current_state = STORAGE;
         current_storage_state = STORAGE_IDLE;
-        storage_complete = false;
         break;
       }
       Pathfind_FSM();
       break;
     case STORAGE:
       if (storage_complete) {
+        storage_complete = false;
         current_state = DEPOSIT;
         current_deposit_state = DEPOSIT_IDLE;
-        deposit_complete = false;
         break;
       }
-      storageFSM();
+      Storage_FSM();
       break;
     case DEPOSIT:
       if (deposit_complete) {
-        Kobuki_Drive(STOP);
+        deposit_complete = false;
         current_state = IDLE;
         break;
       }
@@ -720,7 +680,7 @@ void TIM3_IRQHandler(void) {
     //bumper recovery FSM
     //called first to ensure obstacle is cleared before resuming the interrupted FSM
     if (current_bumper_recovery_state != BUMPER_CLEAR) {
-      bumper_recovery_FSM();
+      Bumper_Recovery_FSM();
       return;
     }
     // main FSM
