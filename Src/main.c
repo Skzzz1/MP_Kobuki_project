@@ -136,6 +136,7 @@ volatile Deposit_State_t current_deposit_state = DEPOSIT_IDLE;
 volatile Bumper_Recovery_State_t current_bumper_recovery_state = BUMPER_CLEAR;
 
 // State Flags
+volatile bool stop_flag = false;
 volatile bool search_complete = false;
 volatile bool pathfind_complete = false;
 volatile bool storage_complete = false;
@@ -222,14 +223,14 @@ void Search_FSM(void) {
           // if seeing bollard B, need to rotate 90 deg ccw to face path A
           path = PATH_A;
           Kobuki_Rotate_Angle_Setpoint(kobuki.angle, 80);
-          current_search_state = SEARCH_ALIGN;
+          current_search_state = SEARCH_ALIGN_PATH;
           break;
 
         } else if (bollard_distance > BOLLARD_A_MIN && bollard_distance < BOLLARD_A_MAX) {
           // if seeing bollard A, need to rotate 90 deg cw to face path B
           path = PATH_B;
           Kobuki_Rotate_Angle_Setpoint(kobuki.angle, -95);
-          current_search_state = SEARCH_ALIGN;
+          current_search_state = SEARCH_ALIGN_PATH;
           break;
         }
       } 
@@ -237,7 +238,7 @@ void Search_FSM(void) {
       break;
 
     // Align to the bollard based on the determined path
-    case SEARCH_ALIGN:
+    case SEARCH_ALIGN_PATH:
       kobuki.rotation_complete = Kobuki_Rotate_Angle(kobuki.angle);
       if (kobuki.rotation_complete) {
         current_search_state = SEARCH_END;
@@ -263,7 +264,6 @@ void Search_FSM(void) {
 void Pathfind_FSM(void) {
   static uint8_t clear_samples;// number of samples to confirm clear detection
   bool cliff_detected = (kobuki.cliff & 0x07); // Check if any cliff sensor is triggered
-  static Drive_t drive_type;
   static bool first_segment;
   static int16_t turn;
 
@@ -372,7 +372,7 @@ void Storage_FSM() {
           break;
 
         case (PATH_B):
-          current_storage_state = STORAGE_ORIENT_B;
+          current_storage_state = STORAGE_ORIENT;
           // rotate anticlockwise 135 deg, adjusted to 133 deg to account for overshoot
           Kobuki_Rotate_Angle_Setpoint(kobuki.angle, 133);       // rotate ACW 135 deg
           break;
@@ -567,44 +567,49 @@ void main_FSM() {
       pathfind_complete = false;
       storage_complete = false;
       deposit_complete = false;
+      stop_flag = false;
 
       if (kobuki.button & BUTTON_0_START) {
         // Start the search process when button 0 is pressed
         current_state = SEARCH;
-        current_search_state = SEARCH_IDLE;
       }
       break;
     case SEARCH:
+      if (stop_flag) {
+        current_state = IDLE;
+      }
       if (search_complete) {
-        search_complete = false; //clear flag
         current_state = PATHFIND;
-        current_pathfind_state = PATHFIND_IDLE;
         break;
       }
       Search_FSM();
       break;
     case PATHFIND:
+      if (stop_flag) {
+        current_state = IDLE;
+      }
       if (pathfind_complete) {
-        pathfind_complete=false; //clear flag
         cliff_recovery_flags = 0;//clear cliff recovery flags to avoid triggering recovery in storage FSM
         current_state = STORAGE;
-        current_storage_state = STORAGE_IDLE;
         break;
       }
       Pathfind_FSM();
       break;
     case STORAGE:
+      if (stop_flag) {
+        current_state = IDLE;
+      }
       if (storage_complete) {
-        storage_complete = false;
         current_state = DEPOSIT;
-        current_deposit_state = DEPOSIT_IDLE;
         break;
       }
       Storage_FSM();
       break;
     case DEPOSIT:
+      if (stop_flag) {
+        current_state = IDLE;
+      }
       if (deposit_complete) {
-        deposit_complete = false;
         current_state = IDLE;
         break;
       }
@@ -645,7 +650,7 @@ void TIM3_IRQHandler(void) {
     // B1 pressed and wheel drop stops the robot and resets the FSMs to IDLE
     if ((kobuki.button & BUTTON_1_STOP) || kobuki.wheeldrop != 0) {
       Kobuki_Drive(STOP);
-      current_state = IDLE;
+      stop_flag = true;
       current_bumper_recovery_state = BUMPER_CLEAR;
       cliff_recovery_flags = 0;
       return;
