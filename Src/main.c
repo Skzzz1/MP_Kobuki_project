@@ -468,8 +468,8 @@ void Deposit_FSM(void) {
       if (kobuki.rotation_complete) {
         Kobuki_Rotate(STOP);
         current_deposit_state = DEPOSIT_CHECK_DISTANCE;
-        break;
       }
+      break;
       // If the rotation is not complete, keep rotating to align to the midpoint of the detected object
     case (DEPOSIT_CHECK_DISTANCE):
       Deposit_Ultrasonic_Detect(&object);

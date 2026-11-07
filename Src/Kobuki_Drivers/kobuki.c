@@ -1,4 +1,3 @@
-#include <stdint.h>
 #define STM32G474xx
 #include <stdlib.h>  // include this at the top
 

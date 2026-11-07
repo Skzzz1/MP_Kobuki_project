@@ -1,5 +1,6 @@
 #ifndef KOBUKI_H
 #define KOBUKI_H
+#include <stdint.h>
 
 typedef struct {
   uint8_t cliff;
