@@ -995,7 +995,7 @@ LOAD /Users/skzzz/Library/Application Support/stm32cube/bundles/gnu-tools-for-st
                 0x08000000                g_pfnVectors
                 0x080001d8                        . = ALIGN (0x4)
 
-.text           0x080001d8     0x21f0
+.text           0x080001d8     0x21a8
                 0x080001d8                        . = ALIGN (0x4)
  *(.text)
  .text          0x080001d8       0x40 /Users/skzzz/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/thumb/v7e-m+fp/hard/crtbegin.o
@@ -1055,303 +1055,304 @@ LOAD /Users/skzzz/Library/Application Support/stm32cube/bundles/gnu-tools-for-st
                 0x08000f58      0x130 CMakeFiles/project.dir/Src/main.c.obj
                 0x08000f58                Storage_FSM
  .text.Deposit_FSM
-                0x08001088      0x224 CMakeFiles/project.dir/Src/main.c.obj
+                0x08001088      0x22c CMakeFiles/project.dir/Src/main.c.obj
                 0x08001088                Deposit_FSM
  .text.Recovery_FSM
-                0x080012ac       0xc4 CMakeFiles/project.dir/Src/main.c.obj
-                0x080012ac                Recovery_FSM
+                0x080012b4       0xc4 CMakeFiles/project.dir/Src/main.c.obj
+                0x080012b4                Recovery_FSM
  .text.main_FSM
-                0x08001370      0x168 CMakeFiles/project.dir/Src/main.c.obj
-                0x08001370                main_FSM
+                0x08001378      0x118 CMakeFiles/project.dir/Src/main.c.obj
+                0x08001378                main_FSM
  .text.Cliff_Correction_Speed
-                0x080014d8       0x32 CMakeFiles/project.dir/Src/main.c.obj
+                0x08001490       0x32 CMakeFiles/project.dir/Src/main.c.obj
  .text.Timer_Init
-                0x0800150a       0x56 CMakeFiles/project.dir/Src/main.c.obj
-                0x0800150a                Timer_Init
+                0x080014c2       0x56 CMakeFiles/project.dir/Src/main.c.obj
+                0x080014c2                Timer_Init
  .text.TIM3_IRQHandler
-                0x08001560      0x14c CMakeFiles/project.dir/Src/main.c.obj
-                0x08001560                TIM3_IRQHandler
- .text.main     0x080016ac       0x48 CMakeFiles/project.dir/Src/main.c.obj
-                0x080016ac                main
+                0x08001518      0x148 CMakeFiles/project.dir/Src/main.c.obj
+                0x08001518                TIM3_IRQHandler
+ .text.main     0x08001660       0x48 CMakeFiles/project.dir/Src/main.c.obj
+                0x08001660                main
  .text.Search_Wrap_Angle
-                0x080016f4       0x40 CMakeFiles/project.dir/Src/Search_Helper/search_helper.c.obj
-                0x080016f4                Search_Wrap_Angle
+                0x080016a8       0x40 CMakeFiles/project.dir/Src/Search_Helper/search_helper.c.obj
+                0x080016a8                Search_Wrap_Angle
  .text.Search_Reset
-                0x08001734       0x22 CMakeFiles/project.dir/Src/Search_Helper/search_helper.c.obj
-                0x08001734                Search_Reset
+                0x080016e8       0x22 CMakeFiles/project.dir/Src/Search_Helper/search_helper.c.obj
+                0x080016e8                Search_Reset
  .text.Search_Confirm_Clear
-                0x08001756       0x3e CMakeFiles/project.dir/Src/Search_Helper/search_helper.c.obj
-                0x08001756                Search_Confirm_Clear
+                0x0800170a       0x3e CMakeFiles/project.dir/Src/Search_Helper/search_helper.c.obj
+                0x0800170a                Search_Confirm_Clear
  .text.Search_Find_Leading_Edge
-                0x08001794       0x72 CMakeFiles/project.dir/Src/Search_Helper/search_helper.c.obj
-                0x08001794                Search_Find_Leading_Edge
+                0x08001748       0x72 CMakeFiles/project.dir/Src/Search_Helper/search_helper.c.obj
+                0x08001748                Search_Find_Leading_Edge
  .text.Search_Update_Width
-                0x08001806       0x4c CMakeFiles/project.dir/Src/Search_Helper/search_helper.c.obj
-                0x08001806                Search_Update_Width
+                0x080017ba       0x4c CMakeFiles/project.dir/Src/Search_Helper/search_helper.c.obj
+                0x080017ba                Search_Update_Width
  .text.Search_Find_Trailing_Edge
-                0x08001852       0x60 CMakeFiles/project.dir/Src/Search_Helper/search_helper.c.obj
-                0x08001852                Search_Find_Trailing_Edge
+                0x08001806       0x60 CMakeFiles/project.dir/Src/Search_Helper/search_helper.c.obj
+                0x08001806                Search_Find_Trailing_Edge
  .text.Search_Width_Valid
-                0x080018b2       0x3c CMakeFiles/project.dir/Src/Search_Helper/search_helper.c.obj
-                0x080018b2                Search_Width_Valid
- *fill*         0x080018ee        0x2 
+                0x08001866       0x3c CMakeFiles/project.dir/Src/Search_Helper/search_helper.c.obj
+                0x08001866                Search_Width_Valid
+ *fill*         0x080018a2        0x2 
  .text.Search_Width_Degrees
-                0x080018f0       0x28 CMakeFiles/project.dir/Src/Search_Helper/search_helper.c.obj
-                0x080018f0                Search_Width_Degrees
+                0x080018a4       0x28 CMakeFiles/project.dir/Src/Search_Helper/search_helper.c.obj
+                0x080018a4                Search_Width_Degrees
  .text.Search_Midpoint_Turn_Degrees
-                0x08001918       0x54 CMakeFiles/project.dir/Src/Search_Helper/search_helper.c.obj
-                0x08001918                Search_Midpoint_Turn_Degrees
+                0x080018cc       0x54 CMakeFiles/project.dir/Src/Search_Helper/search_helper.c.obj
+                0x080018cc                Search_Midpoint_Turn_Degrees
  .text.Search_Resume_Scan
-                0x0800196c       0x20 CMakeFiles/project.dir/Src/Search_Helper/search_helper.c.obj
-                0x0800196c                Search_Resume_Scan
+                0x08001920       0x20 CMakeFiles/project.dir/Src/Search_Helper/search_helper.c.obj
+                0x08001920                Search_Resume_Scan
  .text.Reset_Handler
-                0x0800198c       0x50 CMakeFiles/project.dir/Src/startup_stm32g474xx.S.obj
-                0x0800198c                Reset_Handler
+                0x08001940       0x50 CMakeFiles/project.dir/Src/startup_stm32g474xx.S.obj
+                0x08001940                Reset_Handler
  .text.Default_Handler
-                0x080019dc        0x2 CMakeFiles/project.dir/Src/startup_stm32g474xx.S.obj
-                0x080019dc                TIM1_BRK_TIM15_IRQHandler
-                0x080019dc                TIM8_TRG_COM_IRQHandler
-                0x080019dc                TIM8_CC_IRQHandler
-                0x080019dc                DMA2_CH8_IRQHandler
-                0x080019dc                DebugMon_Handler
-                0x080019dc                DMA1_CH4_IRQHandler
-                0x080019dc                SPI4_IRQHandler
-                0x080019dc                HRTIM_TIM_FLT_IRQn_IRQHandler
-                0x080019dc                FDCAN3_IT0_IRQHandler
-                0x080019dc                TIM1_CC_IRQHandler
-                0x080019dc                Cordic_IRQHandler
-                0x080019dc                HardFault_Handler
-                0x080019dc                USB_HP_IRQHandler
-                0x080019dc                SysTick_Handler
-                0x080019dc                PendSV_Handler
-                0x080019dc                NMI_Handler
-                0x080019dc                HRTIM_TIMD_IRQn_IRQHandler
-                0x080019dc                EXTI3_IRQHandler
-                0x080019dc                I2C3_ER_IRQHandler
-                0x080019dc                HRTIM_Master_IRQn_IRQHandler
-                0x080019dc                DMA1_CH8_IRQHandler
-                0x080019dc                TIM6_DACUNDER_IRQHandler
-                0x080019dc                EXTI0_IRQHandler
-                0x080019dc                I2C2_EV_IRQHandler
-                0x080019dc                DMA2_CH1_IRQHandler
-                0x080019dc                FPU_IRQHandler
-                0x080019dc                FDCAN1_IT1_IRQHandler
-                0x080019dc                TIM1_UP_TIM16_IRQHandler
-                0x080019dc                DMA2_CH7_IRQHandler
-                0x080019dc                UsageFault_Handler
-                0x080019dc                ADC1_2_IRQHandler
-                0x080019dc                SPI1_IRQHandler
-                0x080019dc                DMA1_CH7_IRQHandler
-                0x080019dc                HRTIM_TIMB_IRQn_IRQHandler
-                0x080019dc                TIM8_UP_IRQHandler
-                0x080019dc                USBWakeUP_IRQHandler
-                0x080019dc                RTC_ALARM_IRQHandler
-                0x080019dc                DMA1_CH6_IRQHandler
-                0x080019dc                TIM20_TRG_COM_IRQHandler
-                0x080019dc                USART3_IRQHandler
-                0x080019dc                LPUART_IRQHandler
-                0x080019dc                UART5_IRQHandler
-                0x080019dc                ADC3_IRQHandler
-                0x080019dc                TIM4_IRQHandler
-                0x080019dc                QUADSPI_IRQHandler
-                0x080019dc                I2C1_EV_IRQHandler
-                0x080019dc                DMA2_CH5_IRQHandler
-                0x080019dc                UART4_IRQHandler
-                0x080019dc                DMA1_CH3_IRQHandler
-                0x080019dc                RCC_IRQHandler
-                0x080019dc                TIM20_UP_IRQHandler
-                0x080019dc                TIM1_TRG_COM_IRQHandler
-                0x080019dc                Default_Handler
-                0x080019dc                FMAC_IRQHandler
-                0x080019dc                EXTI15_10_IRQHandler
-                0x080019dc                TIM7_IRQHandler
-                0x080019dc                FDCAN3_IT1_IRQHandler
-                0x080019dc                TIM5_IRQHandler
-                0x080019dc                UCPD1_IRQHandler
-                0x080019dc                I2C3_EV_IRQHandler
-                0x080019dc                EXTI9_5_IRQHandler
-                0x080019dc                DMA1_CH2_IRQHandler
-                0x080019dc                RTC_WKUP_IRQHandler
-                0x080019dc                SAI_IRQHandler
-                0x080019dc                PVD_PVM_IRQHandler
-                0x080019dc                SPI2_IRQHandler
-                0x080019dc                DMA1_CH1_IRQHandler
-                0x080019dc                MemManage_Handler
-                0x080019dc                ADC5_IRQHandler
-                0x080019dc                SVC_Handler
-                0x080019dc                CRS_IRQHandler
-                0x080019dc                USB_LP_IRQHandler
-                0x080019dc                EXTI4_IRQHandler
-                0x080019dc                RNG_IRQHandler
-                0x080019dc                FDCAN2_IT1_IRQHandler
-                0x080019dc                HRTIM_TIMF_IRQn_IRQHandler
-                0x080019dc                ADC4_IRQHandler
-                0x080019dc                HRTIM_TIMA_IRQn_IRQHandler
-                0x080019dc                WWDG_IRQHandler
-                0x080019dc                I2C4_EV_IRQHandler
-                0x080019dc                FDCAN2_IT0_IRQHandler
-                0x080019dc                FDCAN1_IT0_IRQHandler
-                0x080019dc                TIM2_IRQHandler
-                0x080019dc                COMP7_IRQHandler
-                0x080019dc                COMP1_2_3_IRQHandler
-                0x080019dc                EXTI1_IRQHandler
-                0x080019dc                HRTIM_TIMC_IRQn_IRQHandler
-                0x080019dc                USART2_IRQHandler
-                0x080019dc                COMP4_5_6_IRQHandler
-                0x080019dc                TIM20_BRK_IRQHandler
-                0x080019dc                I2C2_ER_IRQHandler
-                0x080019dc                TIM8_BRK_IRQHandler
-                0x080019dc                FLASH_IRQHandler
-                0x080019dc                TIM20_CC_IRQHandler
-                0x080019dc                BusFault_Handler
-                0x080019dc                USART1_IRQHandler
-                0x080019dc                SPI3_IRQHandler
-                0x080019dc                DMA2_CH6_IRQHandler
-                0x080019dc                DMA2_CH3_IRQHandler
-                0x080019dc                DMA2_CH2_IRQHandler
-                0x080019dc                I2C1_ER_IRQHandler
-                0x080019dc                FMC_IRQHandler
-                0x080019dc                DMA1_CH5_IRQHandler
-                0x080019dc                DMA2_CH4_IRQHandler
-                0x080019dc                LPTIM1_IRQHandler
-                0x080019dc                DMAMUX_OVR_IRQHandler
-                0x080019dc                I2C4_ER_IRQHandler
-                0x080019dc                HRTIM_TIME_IRQn_IRQHandler
-                0x080019dc                RTC_TAMP_CSS_LSE_IRQHandler
-                0x080019dc                EXTI2_IRQHandler
- *fill*         0x080019de        0x2 
+                0x08001990        0x2 CMakeFiles/project.dir/Src/startup_stm32g474xx.S.obj
+                0x08001990                TIM1_BRK_TIM15_IRQHandler
+                0x08001990                TIM8_TRG_COM_IRQHandler
+                0x08001990                TIM8_CC_IRQHandler
+                0x08001990                DMA2_CH8_IRQHandler
+                0x08001990                DebugMon_Handler
+                0x08001990                DMA1_CH4_IRQHandler
+                0x08001990                SPI4_IRQHandler
+                0x08001990                HRTIM_TIM_FLT_IRQn_IRQHandler
+                0x08001990                FDCAN3_IT0_IRQHandler
+                0x08001990                TIM1_CC_IRQHandler
+                0x08001990                Cordic_IRQHandler
+                0x08001990                HardFault_Handler
+                0x08001990                USB_HP_IRQHandler
+                0x08001990                SysTick_Handler
+                0x08001990                PendSV_Handler
+                0x08001990                NMI_Handler
+                0x08001990                HRTIM_TIMD_IRQn_IRQHandler
+                0x08001990                EXTI3_IRQHandler
+                0x08001990                I2C3_ER_IRQHandler
+                0x08001990                HRTIM_Master_IRQn_IRQHandler
+                0x08001990                DMA1_CH8_IRQHandler
+                0x08001990                TIM6_DACUNDER_IRQHandler
+                0x08001990                EXTI0_IRQHandler
+                0x08001990                I2C2_EV_IRQHandler
+                0x08001990                DMA2_CH1_IRQHandler
+                0x08001990                FPU_IRQHandler
+                0x08001990                FDCAN1_IT1_IRQHandler
+                0x08001990                TIM1_UP_TIM16_IRQHandler
+                0x08001990                DMA2_CH7_IRQHandler
+                0x08001990                UsageFault_Handler
+                0x08001990                ADC1_2_IRQHandler
+                0x08001990                SPI1_IRQHandler
+                0x08001990                DMA1_CH7_IRQHandler
+                0x08001990                HRTIM_TIMB_IRQn_IRQHandler
+                0x08001990                TIM8_UP_IRQHandler
+                0x08001990                USBWakeUP_IRQHandler
+                0x08001990                RTC_ALARM_IRQHandler
+                0x08001990                DMA1_CH6_IRQHandler
+                0x08001990                TIM20_TRG_COM_IRQHandler
+                0x08001990                USART3_IRQHandler
+                0x08001990                LPUART_IRQHandler
+                0x08001990                UART5_IRQHandler
+                0x08001990                ADC3_IRQHandler
+                0x08001990                TIM4_IRQHandler
+                0x08001990                QUADSPI_IRQHandler
+                0x08001990                I2C1_EV_IRQHandler
+                0x08001990                DMA2_CH5_IRQHandler
+                0x08001990                UART4_IRQHandler
+                0x08001990                DMA1_CH3_IRQHandler
+                0x08001990                RCC_IRQHandler
+                0x08001990                TIM20_UP_IRQHandler
+                0x08001990                TIM1_TRG_COM_IRQHandler
+                0x08001990                Default_Handler
+                0x08001990                FMAC_IRQHandler
+                0x08001990                EXTI15_10_IRQHandler
+                0x08001990                TIM7_IRQHandler
+                0x08001990                FDCAN3_IT1_IRQHandler
+                0x08001990                TIM5_IRQHandler
+                0x08001990                UCPD1_IRQHandler
+                0x08001990                I2C3_EV_IRQHandler
+                0x08001990                EXTI9_5_IRQHandler
+                0x08001990                DMA1_CH2_IRQHandler
+                0x08001990                RTC_WKUP_IRQHandler
+                0x08001990                SAI_IRQHandler
+                0x08001990                PVD_PVM_IRQHandler
+                0x08001990                SPI2_IRQHandler
+                0x08001990                DMA1_CH1_IRQHandler
+                0x08001990                MemManage_Handler
+                0x08001990                ADC5_IRQHandler
+                0x08001990                SVC_Handler
+                0x08001990                CRS_IRQHandler
+                0x08001990                USB_LP_IRQHandler
+                0x08001990                EXTI4_IRQHandler
+                0x08001990                RNG_IRQHandler
+                0x08001990                FDCAN2_IT1_IRQHandler
+                0x08001990                HRTIM_TIMF_IRQn_IRQHandler
+                0x08001990                ADC4_IRQHandler
+                0x08001990                HRTIM_TIMA_IRQn_IRQHandler
+                0x08001990                WWDG_IRQHandler
+                0x08001990                I2C4_EV_IRQHandler
+                0x08001990                FDCAN2_IT0_IRQHandler
+                0x08001990                FDCAN1_IT0_IRQHandler
+                0x08001990                TIM2_IRQHandler
+                0x08001990                COMP7_IRQHandler
+                0x08001990                COMP1_2_3_IRQHandler
+                0x08001990                EXTI1_IRQHandler
+                0x08001990                HRTIM_TIMC_IRQn_IRQHandler
+                0x08001990                USART2_IRQHandler
+                0x08001990                COMP4_5_6_IRQHandler
+                0x08001990                TIM20_BRK_IRQHandler
+                0x08001990                I2C2_ER_IRQHandler
+                0x08001990                TIM8_BRK_IRQHandler
+                0x08001990                FLASH_IRQHandler
+                0x08001990                TIM20_CC_IRQHandler
+                0x08001990                BusFault_Handler
+                0x08001990                USART1_IRQHandler
+                0x08001990                SPI3_IRQHandler
+                0x08001990                DMA2_CH6_IRQHandler
+                0x08001990                DMA2_CH3_IRQHandler
+                0x08001990                DMA2_CH2_IRQHandler
+                0x08001990                I2C1_ER_IRQHandler
+                0x08001990                FMC_IRQHandler
+                0x08001990                DMA1_CH5_IRQHandler
+                0x08001990                DMA2_CH4_IRQHandler
+                0x08001990                LPTIM1_IRQHandler
+                0x08001990                DMAMUX_OVR_IRQHandler
+                0x08001990                I2C4_ER_IRQHandler
+                0x08001990                HRTIM_TIME_IRQn_IRQHandler
+                0x08001990                RTC_TAMP_CSS_LSE_IRQHandler
+                0x08001990                EXTI2_IRQHandler
+ *fill*         0x08001992        0x2 
  .text.UART_Init
-                0x080019e0       0xac CMakeFiles/project.dir/Src/G474RE_Drivers/uart.c.obj
-                0x080019e0                UART_Init
- .text.UART_Tx  0x08001a8c       0x30 CMakeFiles/project.dir/Src/G474RE_Drivers/uart.c.obj
-                0x08001a8c                UART_Tx
- .text.UART_Rx  0x08001abc       0x38 CMakeFiles/project.dir/Src/G474RE_Drivers/uart.c.obj
-                0x08001abc                UART_Rx
+                0x08001994       0xac CMakeFiles/project.dir/Src/G474RE_Drivers/uart.c.obj
+                0x08001994                UART_Init
+ .text.UART_Tx  0x08001a40       0x30 CMakeFiles/project.dir/Src/G474RE_Drivers/uart.c.obj
+                0x08001a40                UART_Tx
+ .text.UART_Rx  0x08001a70       0x38 CMakeFiles/project.dir/Src/G474RE_Drivers/uart.c.obj
+                0x08001a70                UART_Rx
  .text.Kobuki_Read
-                0x08001af4       0x8c CMakeFiles/project.dir/Src/Kobuki_Drivers/kobuki.c.obj
-                0x08001af4                Kobuki_Read
+                0x08001aa8       0x8c CMakeFiles/project.dir/Src/Kobuki_Drivers/kobuki.c.obj
+                0x08001aa8                Kobuki_Read
+ *fill*         0x08001b34        0x4 
  .text.Kobuki_Rotate_Angle_Setpoint
-                0x08001b80       0x8c CMakeFiles/project.dir/Src/Kobuki_Drivers/kobuki.c.obj
-                0x08001b80                Kobuki_Rotate_Angle_Setpoint
- *fill*         0x08001c0c        0x4 
+                0x08001b38       0x8c CMakeFiles/project.dir/Src/Kobuki_Drivers/kobuki.c.obj
+                0x08001b38                Kobuki_Rotate_Angle_Setpoint
+ *fill*         0x08001bc4        0x4 
  .text.Kobuki_Rotate_Angle
-                0x08001c10      0x17c CMakeFiles/project.dir/Src/Kobuki_Drivers/kobuki.c.obj
-                0x08001c10                Kobuki_Rotate_Angle
- *fill*         0x08001d8c        0x4 
+                0x08001bc8      0x17c CMakeFiles/project.dir/Src/Kobuki_Drivers/kobuki.c.obj
+                0x08001bc8                Kobuki_Rotate_Angle
+ *fill*         0x08001d44        0x4 
  .text.Kobuki_Drive_Distance_Setpoint
-                0x08001d90       0x58 CMakeFiles/project.dir/Src/Kobuki_Drivers/kobuki.c.obj
-                0x08001d90                Kobuki_Drive_Distance_Setpoint
+                0x08001d48       0x58 CMakeFiles/project.dir/Src/Kobuki_Drivers/kobuki.c.obj
+                0x08001d48                Kobuki_Drive_Distance_Setpoint
  .text.Kobuki_Drive_Distance
-                0x08001de8      0x110 CMakeFiles/project.dir/Src/Kobuki_Drivers/kobuki.c.obj
-                0x08001de8                Kobuki_Drive_Distance
+                0x08001da0      0x110 CMakeFiles/project.dir/Src/Kobuki_Drivers/kobuki.c.obj
+                0x08001da0                Kobuki_Drive_Distance
  .text.Kobuki_Tx
-                0x08001ef8       0x6c CMakeFiles/project.dir/Src/Kobuki_Drivers/kobuki.c.obj
-                0x08001ef8                Kobuki_Tx
+                0x08001eb0       0x6c CMakeFiles/project.dir/Src/Kobuki_Drivers/kobuki.c.obj
+                0x08001eb0                Kobuki_Tx
  .text.Kobuki_Rx
-                0x08001f64       0xc6 CMakeFiles/project.dir/Src/Kobuki_Drivers/kobuki.c.obj
-                0x08001f64                Kobuki_Rx
+                0x08001f1c       0xc6 CMakeFiles/project.dir/Src/Kobuki_Drivers/kobuki.c.obj
+                0x08001f1c                Kobuki_Rx
  .text.Kobuki_Drive
-                0x0800202a       0x6e CMakeFiles/project.dir/Src/Kobuki_Drivers/kobuki.c.obj
-                0x0800202a                Kobuki_Drive
+                0x08001fe2       0x6e CMakeFiles/project.dir/Src/Kobuki_Drivers/kobuki.c.obj
+                0x08001fe2                Kobuki_Drive
  .text.Kobuki_Rotate
-                0x08002098       0x6e CMakeFiles/project.dir/Src/Kobuki_Drivers/kobuki.c.obj
-                0x08002098                Kobuki_Rotate
- *fill*         0x08002106        0x2 
+                0x08002050       0x6e CMakeFiles/project.dir/Src/Kobuki_Drivers/kobuki.c.obj
+                0x08002050                Kobuki_Rotate
+ *fill*         0x080020be        0x2 
  .text.ADC_Init
-                0x08002108       0xcc CMakeFiles/project.dir/Src/ADC/adc.c.obj
-                0x08002108                ADC_Init
+                0x080020c0       0xcc CMakeFiles/project.dir/Src/ADC/adc.c.obj
+                0x080020c0                ADC_Init
  .text.ADC_Read
-                0x080021d4       0xda CMakeFiles/project.dir/Src/ADC/adc.c.obj
-                0x080021d4                ADC_Read
- *fill*         0x080022ae        0x2 
+                0x0800218c       0xda CMakeFiles/project.dir/Src/ADC/adc.c.obj
+                0x0800218c                ADC_Read
+ *fill*         0x08002266        0x2 
  .text.Ultrasonic_Init
-                0x080022b0       0x40 CMakeFiles/project.dir/Src/Ultrasonic/ultrasonic.c.obj
-                0x080022b0                Ultrasonic_Init
+                0x08002268       0x40 CMakeFiles/project.dir/Src/Ultrasonic/ultrasonic.c.obj
+                0x08002268                Ultrasonic_Init
  .text.Ultrasonic_Read
-                0x080022f0       0x50 CMakeFiles/project.dir/Src/Ultrasonic/ultrasonic.c.obj
-                0x080022f0                Ultrasonic_Read
+                0x080022a8       0x50 CMakeFiles/project.dir/Src/Ultrasonic/ultrasonic.c.obj
+                0x080022a8                Ultrasonic_Read
  .text.Ultrasonic_Detect
-                0x08002340       0x38 CMakeFiles/project.dir/Src/Ultrasonic/ultrasonic.c.obj
-                0x08002340                Ultrasonic_Detect
+                0x080022f8       0x38 CMakeFiles/project.dir/Src/Ultrasonic/ultrasonic.c.obj
+                0x080022f8                Ultrasonic_Detect
  .text.Deposit_Ultrasonic_Detect
-                0x08002378       0x38 CMakeFiles/project.dir/Src/Ultrasonic/ultrasonic.c.obj
-                0x08002378                Deposit_Ultrasonic_Detect
+                0x08002330       0x38 CMakeFiles/project.dir/Src/Ultrasonic/ultrasonic.c.obj
+                0x08002330                Deposit_Ultrasonic_Detect
  *(.glue_7)
- .glue_7        0x080023b0        0x0 linker stubs
+ .glue_7        0x08002368        0x0 linker stubs
  *(.glue_7t)
- .glue_7t       0x080023b0        0x0 linker stubs
+ .glue_7t       0x08002368        0x0 linker stubs
  *(.eh_frame)
- .eh_frame      0x080023b0        0x0 /Users/skzzz/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/thumb/v7e-m+fp/hard/crtbegin.o
+ .eh_frame      0x08002368        0x0 /Users/skzzz/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/thumb/v7e-m+fp/hard/crtbegin.o
  *(.init)
- .init          0x080023b0        0x4 /Users/skzzz/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/thumb/v7e-m+fp/hard/crti.o
-                0x080023b0                _init
- .init          0x080023b4        0x8 /Users/skzzz/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/thumb/v7e-m+fp/hard/crtn.o
+ .init          0x08002368        0x4 /Users/skzzz/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/thumb/v7e-m+fp/hard/crti.o
+                0x08002368                _init
+ .init          0x0800236c        0x8 /Users/skzzz/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/thumb/v7e-m+fp/hard/crtn.o
  *(.fini)
- .fini          0x080023bc        0x4 /Users/skzzz/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/thumb/v7e-m+fp/hard/crti.o
-                0x080023bc                _fini
- .fini          0x080023c0        0x8 /Users/skzzz/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/thumb/v7e-m+fp/hard/crtn.o
-                0x080023c8                        . = ALIGN (0x4)
-                0x080023c8                        _etext = .
+ .fini          0x08002374        0x4 /Users/skzzz/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/thumb/v7e-m+fp/hard/crti.o
+                0x08002374                _fini
+ .fini          0x08002378        0x8 /Users/skzzz/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/thumb/v7e-m+fp/hard/crtn.o
+                0x08002380                        . = ALIGN (0x4)
+                0x08002380                        _etext = .
 
-.vfp11_veneer   0x080023c8        0x0
- .vfp11_veneer  0x080023c8        0x0 linker stubs
+.vfp11_veneer   0x08002380        0x0
+ .vfp11_veneer  0x08002380        0x0 linker stubs
 
-.v4_bx          0x080023c8        0x0
- .v4_bx         0x080023c8        0x0 linker stubs
+.v4_bx          0x08002380        0x0
+ .v4_bx         0x08002380        0x0 linker stubs
 
-.iplt           0x080023c8        0x0
- .iplt          0x080023c8        0x0 /Users/skzzz/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/thumb/v7e-m+fp/hard/crtbegin.o
+.iplt           0x08002380        0x0
+ .iplt          0x08002380        0x0 /Users/skzzz/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/thumb/v7e-m+fp/hard/crtbegin.o
 
-.rodata         0x080023c8        0x0
-                0x080023c8                        . = ALIGN (0x4)
+.rodata         0x08002380        0x0
+                0x08002380                        . = ALIGN (0x4)
  *(.rodata)
  *(.rodata*)
-                0x080023c8                        . = ALIGN (0x4)
+                0x08002380                        . = ALIGN (0x4)
 
-.ARM.extab      0x080023c8        0x0
-                0x080023c8                        . = ALIGN (0x4)
+.ARM.extab      0x08002380        0x0
+                0x08002380                        . = ALIGN (0x4)
  *(.ARM.extab* .gnu.linkonce.armextab.*)
-                0x080023c8                        . = ALIGN (0x4)
+                0x08002380                        . = ALIGN (0x4)
 
-.ARM            0x080023c8        0x0
-                0x080023c8                        . = ALIGN (0x4)
-                0x080023c8                        __exidx_start = .
+.ARM            0x08002380        0x0
+                0x08002380                        . = ALIGN (0x4)
+                0x08002380                        __exidx_start = .
  *(.ARM.exidx*)
-                0x080023c8                        __exidx_end = .
-                0x080023c8                        . = ALIGN (0x4)
+                0x08002380                        __exidx_end = .
+                0x08002380                        . = ALIGN (0x4)
 
-.preinit_array  0x080023c8        0x0
-                0x080023c8                        . = ALIGN (0x4)
-                0x080023c8                        PROVIDE (__preinit_array_start = .)
+.preinit_array  0x08002380        0x0
+                0x08002380                        . = ALIGN (0x4)
+                0x08002380                        PROVIDE (__preinit_array_start = .)
  *(.preinit_array*)
-                0x080023c8                        PROVIDE (__preinit_array_end = .)
-                0x080023c8                        . = ALIGN (0x4)
+                0x08002380                        PROVIDE (__preinit_array_end = .)
+                0x08002380                        . = ALIGN (0x4)
 
-.init_array     0x080023c8        0x8
-                0x080023c8                        . = ALIGN (0x4)
-                0x080023c8                        PROVIDE (__init_array_start = .)
+.init_array     0x08002380        0x8
+                0x08002380                        . = ALIGN (0x4)
+                0x08002380                        PROVIDE (__init_array_start = .)
  *(SORT_BY_NAME(.init_array.*))
  .init_array.00000
-                0x080023c8        0x4 /Users/skzzz/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc.a(libc_a-__call_atexit.o)
+                0x08002380        0x4 /Users/skzzz/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc.a(libc_a-__call_atexit.o)
  *(.init_array*)
- .init_array    0x080023cc        0x4 /Users/skzzz/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/thumb/v7e-m+fp/hard/crtbegin.o
-                0x080023d0                        PROVIDE (__init_array_end = .)
-                0x080023d0                        . = ALIGN (0x4)
+ .init_array    0x08002384        0x4 /Users/skzzz/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/thumb/v7e-m+fp/hard/crtbegin.o
+                0x08002388                        PROVIDE (__init_array_end = .)
+                0x08002388                        . = ALIGN (0x4)
 
-.fini_array     0x080023d0        0x4
-                0x080023d0                        . = ALIGN (0x4)
-                0x080023d0                        PROVIDE (__fini_array_start = .)
+.fini_array     0x08002388        0x4
+                0x08002388                        . = ALIGN (0x4)
+                0x08002388                        PROVIDE (__fini_array_start = .)
  *(SORT_BY_NAME(.fini_array.*))
  *(.fini_array*)
- .fini_array    0x080023d0        0x4 /Users/skzzz/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/thumb/v7e-m+fp/hard/crtbegin.o
-                0x080023d4                        PROVIDE (__fini_array_end = .)
-                0x080023d4                        . = ALIGN (0x4)
-                0x080023d4                        _sidata = LOADADDR (.data)
+ .fini_array    0x08002388        0x4 /Users/skzzz/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/thumb/v7e-m+fp/hard/crtbegin.o
+                0x0800238c                        PROVIDE (__fini_array_end = .)
+                0x0800238c                        . = ALIGN (0x4)
+                0x0800238c                        _sidata = LOADADDR (.data)
 
-.rel.dyn        0x080023d4        0x0
- .rel.iplt      0x080023d4        0x0 /Users/skzzz/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/thumb/v7e-m+fp/hard/crtbegin.o
+.rel.dyn        0x0800238c        0x0
+ .rel.iplt      0x0800238c        0x0 /Users/skzzz/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/thumb/v7e-m+fp/hard/crtbegin.o
 
-.data           0x20000000        0x4 load address 0x080023d4
+.data           0x20000000        0x4 load address 0x0800238c
                 0x20000000                        _sdata = .
  *(.data)
  *(.data*)
@@ -1362,10 +1363,10 @@ LOAD /Users/skzzz/Library/Application Support/stm32cube/bundles/gnu-tools-for-st
  *(.RamFunc*)
                 0x20000004                        . = ALIGN (0x4)
 
-.igot.plt       0x20000004        0x0 load address 0x080023d8
+.igot.plt       0x20000004        0x0 load address 0x08002390
  .igot.plt      0x20000004        0x0 /Users/skzzz/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/thumb/v7e-m+fp/hard/crtbegin.o
 
-.tdata          0x20000004        0x0 load address 0x080023d8
+.tdata          0x20000004        0x0 load address 0x08002390
  *(.tdata .tdata.* .gnu.linkonce.td.*)
                 0x20000004                        . = ALIGN (0x4)
                 0x20000004                        _edata = .
@@ -1382,7 +1383,7 @@ LOAD /Users/skzzz/Library/Application Support/stm32cube/bundles/gnu-tools-for-st
                 [!provide]                        PROVIDE (__data_source_end = __tdata_source_end)
                 [!provide]                        PROVIDE (__data_source_size = (__data_source_end - __data_source))
 
-.tbss           0x20000004        0x0 load address 0x080023d8
+.tbss           0x20000004        0x0 load address 0x08002390
                 0x20000004                        _sbss = .
                 0x20000004                        __bss_start__ = _sbss
                 [!provide]                        PROVIDE (__bss_start = .)
@@ -1400,7 +1401,7 @@ LOAD /Users/skzzz/Library/Application Support/stm32cube/bundles/gnu-tools-for-st
                 [!provide]                        PROVIDE (__arm32_tls_tcb_offset = MAX (0x8, __tls_align))
                 [!provide]                        PROVIDE (__arm64_tls_tcb_offset = MAX (0x10, __tls_align))
 
-.bss            0x20000004      0x20c load address 0x080023d8
+.bss            0x20000004      0x20c load address 0x08002390
  *(.bss)
  .bss           0x20000004       0x1c /Users/skzzz/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/thumb/v7e-m+fp/hard/crtbegin.o
  *(.bss*)
@@ -1457,21 +1458,19 @@ LOAD /Users/skzzz/Library/Application Support/stm32cube/bundles/gnu-tools-for-st
  .bss.recovery_state
                 0x200001da        0x1 CMakeFiles/project.dir/Src/main.c.obj
                 0x200001da                recovery_state
- .bss.stop_flag
-                0x200001db        0x1 CMakeFiles/project.dir/Src/main.c.obj
-                0x200001db                stop_flag
  .bss.search_complete
-                0x200001dc        0x1 CMakeFiles/project.dir/Src/main.c.obj
-                0x200001dc                search_complete
+                0x200001db        0x1 CMakeFiles/project.dir/Src/main.c.obj
+                0x200001db                search_complete
  .bss.pathfind_complete
-                0x200001dd        0x1 CMakeFiles/project.dir/Src/main.c.obj
-                0x200001dd                pathfind_complete
+                0x200001dc        0x1 CMakeFiles/project.dir/Src/main.c.obj
+                0x200001dc                pathfind_complete
  .bss.storage_complete
-                0x200001de        0x1 CMakeFiles/project.dir/Src/main.c.obj
-                0x200001de                storage_complete
+                0x200001dd        0x1 CMakeFiles/project.dir/Src/main.c.obj
+                0x200001dd                storage_complete
  .bss.deposit_complete
-                0x200001df        0x1 CMakeFiles/project.dir/Src/main.c.obj
-                0x200001df                deposit_complete
+                0x200001de        0x1 CMakeFiles/project.dir/Src/main.c.obj
+                0x200001de                deposit_complete
+ *fill*         0x200001df        0x1 
  .bss.scan.5    0x200001e0       0x10 CMakeFiles/project.dir/Src/main.c.obj
  .bss.clear_samples.4
                 0x200001f0        0x1 CMakeFiles/project.dir/Src/main.c.obj
@@ -1497,9 +1496,9 @@ LOAD /Users/skzzz/Library/Application Support/stm32cube/bundles/gnu-tools-for-st
                 [!provide]                        PROVIDE (__bss_end = .)
                 [!provide]                        PROVIDE (__bss_size = (__bss_end - __bss_start))
                 [!provide]                        PROVIDE (__non_tls_bss_start = ADDR (.bss))
-                0x080023d8                        _siccmsram = LOADADDR (.ccmsram)
+                0x08002390                        _siccmsram = LOADADDR (.ccmsram)
 
-.ccmsram        0x10000000        0x0 load address 0x080023d8
+.ccmsram        0x10000000        0x0 load address 0x08002390
                 0x10000000                        . = ALIGN (0x4)
                 0x10000000                        _sccmsram = .
  *(.ccmsram)
@@ -1567,31 +1566,31 @@ LOAD /Users/skzzz/Library/Application Support/stm32cube/bundles/gnu-tools-for-st
 OUTPUT(project.elf elf32-littlearm)
 LOAD linker stubs
 
-.debug_frame    0x00000000      0x8c0
+.debug_frame    0x00000000      0x8c4
  .debug_frame   0x00000000       0x2c /Users/skzzz/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc.a(libc_a-init.o)
  .debug_frame   0x0000002c       0xb0 /Users/skzzz/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc.a(libc_a-lock.o)
  .debug_frame   0x000000dc       0x5c /Users/skzzz/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc.a(libc_a-__call_atexit.o)
  .debug_frame   0x00000138       0x20 /Users/skzzz/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc.a(libc_a-atexit.o)
  .debug_frame   0x00000158       0x34 /Users/skzzz/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc.a(libc_a-fini.o)
  .debug_frame   0x0000018c       0x34 /Users/skzzz/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard/libc.a(libc_a-__atexit.o)
- .debug_frame   0x000001c0      0x184 CMakeFiles/project.dir/Src/main.c.obj
- .debug_frame   0x00000344      0x178 CMakeFiles/project.dir/Src/Search_Helper/search_helper.c.obj
- .debug_frame   0x000004bc       0x6c CMakeFiles/project.dir/Src/G474RE_Drivers/uart.c.obj
- .debug_frame   0x00000528      0x188 CMakeFiles/project.dir/Src/Kobuki_Drivers/kobuki.c.obj
- .debug_frame   0x000006b0       0x58 CMakeFiles/project.dir/Src/ADC/adc.c.obj
- .debug_frame   0x00000708       0x98 CMakeFiles/project.dir/Src/Ultrasonic/ultrasonic.c.obj
- .debug_frame   0x000007a0       0xac /Users/skzzz/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/thumb/v7e-m+fp/hard/libgcc.a(_arm_addsubdf3.o)
- .debug_frame   0x0000084c       0x50 /Users/skzzz/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/thumb/v7e-m+fp/hard/libgcc.a(_arm_muldivdf3.o)
- .debug_frame   0x0000089c       0x24 /Users/skzzz/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/thumb/v7e-m+fp/hard/libgcc.a(_arm_fixdfsi.o)
+ .debug_frame   0x000001c0      0x188 CMakeFiles/project.dir/Src/main.c.obj
+ .debug_frame   0x00000348      0x178 CMakeFiles/project.dir/Src/Search_Helper/search_helper.c.obj
+ .debug_frame   0x000004c0       0x6c CMakeFiles/project.dir/Src/G474RE_Drivers/uart.c.obj
+ .debug_frame   0x0000052c      0x188 CMakeFiles/project.dir/Src/Kobuki_Drivers/kobuki.c.obj
+ .debug_frame   0x000006b4       0x58 CMakeFiles/project.dir/Src/ADC/adc.c.obj
+ .debug_frame   0x0000070c       0x98 CMakeFiles/project.dir/Src/Ultrasonic/ultrasonic.c.obj
+ .debug_frame   0x000007a4       0xac /Users/skzzz/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/thumb/v7e-m+fp/hard/libgcc.a(_arm_addsubdf3.o)
+ .debug_frame   0x00000850       0x50 /Users/skzzz/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/thumb/v7e-m+fp/hard/libgcc.a(_arm_muldivdf3.o)
+ .debug_frame   0x000008a0       0x24 /Users/skzzz/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/../lib/gcc/arm-none-eabi/14.3.1/thumb/v7e-m+fp/hard/libgcc.a(_arm_fixdfsi.o)
 
-.debug_info     0x00000000     0x28c7
- .debug_info    0x00000000     0x1194 CMakeFiles/project.dir/Src/main.c.obj
- .debug_info    0x00001194      0x390 CMakeFiles/project.dir/Src/Search_Helper/search_helper.c.obj
- .debug_info    0x00001524       0x30 CMakeFiles/project.dir/Src/startup_stm32g474xx.S.obj
- .debug_info    0x00001554      0x433 CMakeFiles/project.dir/Src/G474RE_Drivers/uart.c.obj
- .debug_info    0x00001987      0x5af CMakeFiles/project.dir/Src/Kobuki_Drivers/kobuki.c.obj
- .debug_info    0x00001f36      0x561 CMakeFiles/project.dir/Src/ADC/adc.c.obj
- .debug_info    0x00002497      0x430 CMakeFiles/project.dir/Src/Ultrasonic/ultrasonic.c.obj
+.debug_info     0x00000000     0x28b6
+ .debug_info    0x00000000     0x1183 CMakeFiles/project.dir/Src/main.c.obj
+ .debug_info    0x00001183      0x390 CMakeFiles/project.dir/Src/Search_Helper/search_helper.c.obj
+ .debug_info    0x00001513       0x30 CMakeFiles/project.dir/Src/startup_stm32g474xx.S.obj
+ .debug_info    0x00001543      0x433 CMakeFiles/project.dir/Src/G474RE_Drivers/uart.c.obj
+ .debug_info    0x00001976      0x5af CMakeFiles/project.dir/Src/Kobuki_Drivers/kobuki.c.obj
+ .debug_info    0x00001f25      0x561 CMakeFiles/project.dir/Src/ADC/adc.c.obj
+ .debug_info    0x00002486      0x430 CMakeFiles/project.dir/Src/Ultrasonic/ultrasonic.c.obj
 
 .debug_abbrev   0x00000000      0x900
  .debug_abbrev  0x00000000      0x2c5 CMakeFiles/project.dir/Src/main.c.obj
@@ -1680,24 +1679,24 @@ LOAD linker stubs
  .debug_macro   0x00022324      0x1c9 CMakeFiles/project.dir/Src/ADC/adc.c.obj
  .debug_macro   0x000224ed      0x1e4 CMakeFiles/project.dir/Src/Ultrasonic/ultrasonic.c.obj
 
-.debug_line     0x00000000     0x3708
- .debug_line    0x00000000      0xedf CMakeFiles/project.dir/Src/main.c.obj
- .debug_line    0x00000edf      0x4c1 CMakeFiles/project.dir/Src/Search_Helper/search_helper.c.obj
- .debug_line    0x000013a0       0x7b CMakeFiles/project.dir/Src/startup_stm32g474xx.S.obj
- .debug_line    0x0000141b      0x7b4 CMakeFiles/project.dir/Src/G474RE_Drivers/uart.c.obj
- .debug_line    0x00001bcf      0xb39 CMakeFiles/project.dir/Src/Kobuki_Drivers/kobuki.c.obj
- .debug_line    0x00002708      0x80a CMakeFiles/project.dir/Src/ADC/adc.c.obj
- .debug_line    0x00002f12      0x7f6 CMakeFiles/project.dir/Src/Ultrasonic/ultrasonic.c.obj
+.debug_line     0x00000000     0x36f1
+ .debug_line    0x00000000      0xec8 CMakeFiles/project.dir/Src/main.c.obj
+ .debug_line    0x00000ec8      0x4c1 CMakeFiles/project.dir/Src/Search_Helper/search_helper.c.obj
+ .debug_line    0x00001389       0x7b CMakeFiles/project.dir/Src/startup_stm32g474xx.S.obj
+ .debug_line    0x00001404      0x7b4 CMakeFiles/project.dir/Src/G474RE_Drivers/uart.c.obj
+ .debug_line    0x00001bb8      0xb39 CMakeFiles/project.dir/Src/Kobuki_Drivers/kobuki.c.obj
+ .debug_line    0x000026f1      0x80a CMakeFiles/project.dir/Src/ADC/adc.c.obj
+ .debug_line    0x00002efb      0x7f6 CMakeFiles/project.dir/Src/Ultrasonic/ultrasonic.c.obj
 
-.debug_str      0x00000000    0xe64d9
- .debug_str     0x00000000    0xe64d9 CMakeFiles/project.dir/Src/main.c.obj
-                              0xe362e (size before relaxing)
- .debug_str     0x000e64d9     0x402b CMakeFiles/project.dir/Src/Search_Helper/search_helper.c.obj
- .debug_str     0x000e64d9       0xaa CMakeFiles/project.dir/Src/startup_stm32g474xx.S.obj
- .debug_str     0x000e64d9    0xe255f CMakeFiles/project.dir/Src/G474RE_Drivers/uart.c.obj
- .debug_str     0x000e64d9    0xe5463 CMakeFiles/project.dir/Src/Kobuki_Drivers/kobuki.c.obj
- .debug_str     0x000e64d9    0xe25de CMakeFiles/project.dir/Src/ADC/adc.c.obj
- .debug_str     0x000e64d9    0xe26d1 CMakeFiles/project.dir/Src/Ultrasonic/ultrasonic.c.obj
+.debug_str      0x00000000    0xe64cf
+ .debug_str     0x00000000    0xe64cf CMakeFiles/project.dir/Src/main.c.obj
+                              0xe3624 (size before relaxing)
+ .debug_str     0x000e64cf     0x402b CMakeFiles/project.dir/Src/Search_Helper/search_helper.c.obj
+ .debug_str     0x000e64cf       0xaa CMakeFiles/project.dir/Src/startup_stm32g474xx.S.obj
+ .debug_str     0x000e64cf    0xe255f CMakeFiles/project.dir/Src/G474RE_Drivers/uart.c.obj
+ .debug_str     0x000e64cf    0xe5463 CMakeFiles/project.dir/Src/Kobuki_Drivers/kobuki.c.obj
+ .debug_str     0x000e64cf    0xe25de CMakeFiles/project.dir/Src/ADC/adc.c.obj
+ .debug_str     0x000e64cf    0xe26d1 CMakeFiles/project.dir/Src/Ultrasonic/ultrasonic.c.obj
 
 .comment        0x00000000       0x43
  .comment       0x00000000       0x43 CMakeFiles/project.dir/Src/main.c.obj
