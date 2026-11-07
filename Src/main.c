@@ -16,6 +16,7 @@
  *
  ******************************************************************************
  */
+
 #include "Kobuki_Drivers/kobuki.h"
 #include <stdbool.h>
 #include <stdint.h>
@@ -33,8 +34,8 @@
 #define BUTTON_2_ROTATE 0x04U
 
 // Global constants
-#define ITEM_WIDTH_THRES 100             // degrees
-#define ITEM_WIDTH_THRES_DEPOSIT 100     // degrees
+#define ITEM_WIDTH_THRES 80             // degrees
+#define ITEM_WIDTH_THRES_DEPOSIT 80     // degrees
 #define SEARCH_DIST_MAX 1000             // mm
 #define SEARCH_DIST_MIN 75               // mm
 #define SEARCH_CLEAR_CONFIRM_SAMPLES 3   // number of samples to confirm clear detection
@@ -108,9 +109,9 @@ typedef enum {
 
 // Bumper recovery FSM states
 typedef enum { 
-  BUMPER_CLEAR, 
-  BUMPER_REVERSE, 
-  BUMPER_TURN 
+  CLEAR, 
+  REVERSE, 
+  TURN 
 } Bumper_Recovery_State_t;
 
 // Global variables
@@ -133,7 +134,7 @@ volatile Search_State_t current_search_state = SEARCH_IDLE;
 volatile Storage_State_t current_storage_state = STORAGE_IDLE;
 volatile Pathfind_State_t current_pathfind_state = PATHFIND_IDLE;
 volatile Deposit_State_t current_deposit_state = DEPOSIT_IDLE;
-volatile Bumper_Recovery_State_t current_bumper_recovery_state = BUMPER_CLEAR;
+volatile Bumper_Recovery_State_t recovery_state = CLEAR;
 
 // State Flags
 volatile bool stop_flag = false;
@@ -281,9 +282,9 @@ void Pathfind_FSM(void) {
       break;
 
     case PATHFIND_DRIVE:
-      // Only move forward if the cliff sensors are not triggered after required number of samples
-      // otherwise stop and request cliff recovery
-      if ((clear_samples < PATHFIND_CLEAR_SAMPLES) || cliff_detected){
+      // Establish clear ground before accepting a new segment endpoint.
+      // Do not include cliff_detected here: it would hide the centre endpoint.
+      if (clear_samples < PATHFIND_CLEAR_SAMPLES){
         clear_samples = 0;
         Kobuki_Drive(STOP);
         current_pathfind_state = PATHFIND_CLEAR;
@@ -305,6 +306,16 @@ void Pathfind_FSM(void) {
         }
       }
 
+      // With no centre detection, any remaining cliff is a side correction.
+      // Require fresh clear samples after recovery before accepting an endpoint.
+      if (cliff_detected) {
+        clear_samples = 0;
+        Kobuki_Drive(STOP);
+        cliff_recovery_flags = kobuki.cliff & 0x07;
+        current_pathfind_state = PATHFIND_CLEAR;
+        break;
+      }
+
       Kobuki_Drive(PATHFIND_SPEED);
       break;
 
@@ -318,6 +329,7 @@ void Pathfind_FSM(void) {
       break;
 
     case PATHFIND_CLEAR:
+      Kobuki_Drive(STOP);
       // Do not drive forward or count this same edge as the second endpoint.
       // If the corner still lies under a sensor, reverse and turn away.
       if (cliff_detected) {
@@ -520,26 +532,26 @@ void Deposit_FSM(void) {
 // Bumper recovery FSM
 // Backs off the bumper, then turns away from the obstacle
 // uses reverse_ticks to determine how long to reverse, and turn_speed to determine the speed and direction of the turn
-void Bumper_Recovery_FSM() {
+void Recovery_FSM() {
   // Recover without changing the interrupted FSM's motion setpoints.
-  switch (current_bumper_recovery_state) {
-    case BUMPER_REVERSE:
+  switch (recovery_state) {
+    case REVERSE:
       if (--reverse_ticks == 0) {
         // After backing off, start turning away from the obstacle
         turn_start_angle = kobuki.angle;
-        current_bumper_recovery_state = BUMPER_TURN;
+        recovery_state = TURN;
       } else {
         Kobuki_Drive(-100);// else keep reversing at 100 mm/s
       }
       break;
 
-    case BUMPER_TURN: {
+    case TURN: {
       int32_t turn = Search_Wrap_Angle((int32_t)kobuki.angle - turn_start_angle);
 
       // Stop turning after 10 deg, then resume the interrupted FSM.
       if ((turn_speed > 0 && turn >= 1000) ||(turn_speed < 0 && turn <= -1000)) {
         Kobuki_Drive(STOP);
-        current_bumper_recovery_state = BUMPER_CLEAR;
+        recovery_state = CLEAR;
       } else {
         // turn speed is set based on which cliff sensor is triggered, and the direction of the turn is determined by the sign of the turn_speed
         Kobuki_Rotate(turn_speed);
@@ -547,7 +559,7 @@ void Bumper_Recovery_FSM() {
       break;
     }
 
-    case BUMPER_CLEAR:
+    case CLEAR:
       // bumper recovery complete, resume the interrupted FSM
       break;
   }
@@ -651,7 +663,7 @@ void TIM3_IRQHandler(void) {
     if ((kobuki.button & BUTTON_1_STOP) || kobuki.wheeldrop != 0) {
       Kobuki_Drive(STOP);
       stop_flag = true;
-      current_bumper_recovery_state = BUMPER_CLEAR;
+      recovery_state = CLEAR;
       cliff_recovery_flags = 0;
       return;
     }
@@ -660,32 +672,38 @@ void TIM3_IRQHandler(void) {
       // Right bumper: turn left; left bumper: turn right.
       turn_speed = (kobuki.bumper & 0x04) ? -100 : 100;
       reverse_ticks = 10;  // 10(reverse ticks) x 20 ms at 100 mm/s backs up about 20 mm.
-      current_bumper_recovery_state = BUMPER_REVERSE;
+      recovery_state = REVERSE;
       Kobuki_Drive(-100);
       return;
     }
 
     // Skip general cliff recovery in IDLE and STORAGE.
-    // PATHFIND requires an explicit request; other states also use live sensors.
+    // PATHFIND initiates recovery through a request, preserving expected
+    // centre endpoints and planned corner turns. 
+    // Once recovery is active,live cliffs also restart reversing until the sensors clear
     // Sensor mask 0x07 includes right (bit 0), centre (bit 1), and left (bit 2).
     //cliff recovery flags stores which sensors triggered 
     if (current_state != IDLE && current_state != STORAGE &&
-        (cliff_recovery_flags || (current_state != PATHFIND && (kobuki.cliff & 0x07)))) {
+        (cliff_recovery_flags ||
+         ((current_state != PATHFIND ||
+           recovery_state != CLEAR) &&
+          (kobuki.cliff & 0x07)))) {
       // Prefer the requested sensor flags when a request is pending.
       turn_speed = Cliff_Correction_Speed(cliff_recovery_flags ? cliff_recovery_flags : kobuki.cliff);
       cliff_recovery_flags = 0; // Request has been handled.
 
-      // Start the shared recovery sequence: reverse about 20 mm, then turn.
+      // An active cliff restarts the reverse interval. After it clears,
+      // reverse for approximately another 20 mm before turning.
       reverse_ticks = 10; // 10 ticks x 20 ms at 100 mm/s.
-      current_bumper_recovery_state = BUMPER_REVERSE;
+      recovery_state = REVERSE;
       Kobuki_Drive(-100);
       return;
     }
 
     //bumper recovery FSM
     //called first to ensure obstacle is cleared before resuming the interrupted FSM
-    if (current_bumper_recovery_state != BUMPER_CLEAR) {
-      Bumper_Recovery_FSM();
+    if (recovery_state != CLEAR) {
+      Recovery_FSM();
       return;
     }
     // main FSM
