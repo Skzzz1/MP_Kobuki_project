@@ -666,13 +666,13 @@ void TIM3_IRQHandler(void) {
     // Skip general cliff recovery in IDLE and STORAGE.
     // PATHFIND initiates recovery through a request, preserving expected
     // centre endpoints and planned corner turns. 
+    
     // Once recovery is active,live cliffs also restart reversing until the sensors clear
     // Sensor mask 0x07 includes right (bit 0), centre (bit 1), and left (bit 2).
     //cliff recovery flags stores which sensors triggered 
     if (current_state != IDLE && current_state != STORAGE &&
         (cliff_recovery_flags ||
-         ((current_state != PATHFIND ||
-           recovery_state != CLEAR) &&
+         ((current_state != PATHFIND || recovery_state != CLEAR) &&
           (kobuki.cliff & 0x07)))) {
       // Prefer the requested sensor flags when a request is pending.
       turn_speed = Cliff_Correction_Speed(cliff_recovery_flags ? cliff_recovery_flags : kobuki.cliff);
