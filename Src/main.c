@@ -41,7 +41,7 @@
 #define SEARCH_CLEAR_CONFIRM_SAMPLES 3   // number of samples to confirm clear detection
 #define BOLLARD_A_MAX 1000               // mm
 #define BOLLARD_A_MIN 700                // mm
-#define BOLLARD_B_MAX 690                // mm
+#define BOLLARD_B_MAX 700                // mm
 #define BOLLARD_B_MIN 200                // mm
 #define BOLLARD_CENTRE_MAX 600           // mm
 #define PATHFIND_SPEED 120               // mm/s while following each straight segment
@@ -221,14 +221,14 @@ void Search_FSM(void) {
 
       // If the object is detected and the distance is within the specified range, determine which path to take based on the distance to the bollard
       if (object.detected) {
-        if (bollard_distance > BOLLARD_B_MIN &&bollard_distance < BOLLARD_B_MAX) {
+        if (bollard_distance > BOLLARD_B_MIN &&bollard_distance <= BOLLARD_B_MAX) {
           // if seeing bollard B, need to rotate 90 deg ccw to face path A
           path = PATH_A;
           Kobuki_Rotate_Angle_Setpoint(kobuki.angle, 80);
           current_search_state = SEARCH_ALIGN_PATH;
           break;
 
-        } else if (bollard_distance > BOLLARD_A_MIN && bollard_distance < BOLLARD_A_MAX) {
+        } else if (bollard_distance > BOLLARD_A_MIN && bollard_distance <= BOLLARD_A_MAX) {
           // if seeing bollard A, need to rotate 90 deg cw to face path B
           path = PATH_B;
           Kobuki_Rotate_Angle_Setpoint(kobuki.angle, -95);
