@@ -580,10 +580,6 @@ void Recovery_FSM() {
       }
       break;
     }
-
-    case RECOVERY_CLEAR:
-      // bumper recovery complete, resume the interrupted FSM
-      break;
   }
 }
 
