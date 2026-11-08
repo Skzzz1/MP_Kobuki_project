@@ -104,7 +104,6 @@ typedef enum {
 typedef enum { 
   RECOVERY_IDLE,
   RECOVERY_REVERSE,
-  RECOVERY_CLEAR, 
   RECOVERY_TURN 
 } Recovery_State_t;
 
