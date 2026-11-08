@@ -561,16 +561,13 @@ void Recovery_FSM() {
       break;
 
     case RECOVERY_TURN: {
-      if (recovery_start){
-        current_recovery_state = RECOVERY_IDLE; // If recovery_start is set, 
-        // the recovery FSM must be reset, so return to IDLE
-        break;
-      }
 
       int32_t turn = Search_Wrap_Angle((int32_t)kobuki.angle - turn_start_angle);
 
       // Stop turning after 10 deg, then resume the interrupted FSM.
-      if ((turn_speed > 0 && turn >= 1000) ||(turn_speed < 0 && turn <= -1000)) {
+      // Or if recovery_start is set, the recovery FSM must be reset, so return to IDLE
+      if ((turn_speed > 0 && turn >= 1000) ||(turn_speed < 0 && turn <= -1000)
+           || recovery_start) {
         Kobuki_Drive(STOP);
         current_recovery_state = RECOVERY_IDLE;
       } else {
