@@ -100,19 +100,20 @@ typedef enum {
   DEPOSIT_END
 } Deposit_State_t;
 
+// Recovery FSM states
+typedef enum { 
+  RECOVERY_IDLE,
+  RECOVERY_REVERSE,
+  RECOVERY_CLEAR, 
+  RECOVERY_TURN 
+} Recovery_State_t;
+
 //Path enum to determine which path to take after search
 typedef enum { 
   PATH_A, 
   PATH_B 
 } Path_t;
 
-
-// Bumper recovery FSM states
-typedef enum { 
-  CLEAR, 
-  REVERSE, 
-  TURN 
-} Bumper_Recovery_State_t;
 
 // Global variables
 volatile uint16_t item_width;         // to calculate midpoint of object
@@ -134,9 +135,10 @@ volatile Search_State_t current_search_state = SEARCH_IDLE;
 volatile Storage_State_t current_storage_state = STORAGE_IDLE;
 volatile Pathfind_State_t current_pathfind_state = PATHFIND_IDLE;
 volatile Deposit_State_t current_deposit_state = DEPOSIT_IDLE;
-volatile Bumper_Recovery_State_t recovery_state = CLEAR;
+volatile Recovery_State_t current_recovery_state = RECOVERY_IDLE;
 
 // State Flags
+volatile bool recovery_start = false;
 volatile bool stop_flag = false;
 volatile bool search_complete = false;
 volatile bool pathfind_complete = false;
@@ -534,24 +536,44 @@ void Deposit_FSM(void) {
 // uses reverse_ticks to determine how long to reverse, and turn_speed to determine the speed and direction of the turn
 void Recovery_FSM() {
   // Recover without changing the interrupted FSM's motion setpoints.
-  switch (recovery_state) {
-    case REVERSE:
+  switch (current_recovery_state) {
+    case RECOVERY_IDLE:
+      if (recovery_start){ // If in IDLE and recovery flag is set,
+        //reset flag, set ticks, and enter recovery reverse
+        recovery_start = false;
+        reverse_ticks = 10;  // 10(reverse ticks) x 20 ms at 100 mm/s backs up about 20 mm.
+        current_recovery_state = RECOVERY_REVERSE;
+      }
+      break;
+
+    case RECOVERY_REVERSE:
+      if (recovery_start){
+        current_recovery_state = RECOVERY_IDLE; // If recovery_start is set, 
+        // the recovery FSM must be reset, so return to IDLE
+        break;
+      }
       if (--reverse_ticks == 0) {
         // After backing off, start turning away from the obstacle
         turn_start_angle = kobuki.angle;
-        recovery_state = TURN;
+        current_recovery_state = RECOVERY_TURN;
       } else {
         Kobuki_Drive(-100);// else keep reversing at 100 mm/s
       }
       break;
 
-    case TURN: {
+    case RECOVERY_TURN: {
+      if (recovery_start){
+        current_recovery_state = RECOVERY_IDLE; // If recovery_start is set, 
+        // the recovery FSM must be reset, so return to IDLE
+        break;
+      }
+
       int32_t turn = Search_Wrap_Angle((int32_t)kobuki.angle - turn_start_angle);
 
       // Stop turning after 10 deg, then resume the interrupted FSM.
       if ((turn_speed > 0 && turn >= 1000) ||(turn_speed < 0 && turn <= -1000)) {
         Kobuki_Drive(STOP);
-        recovery_state = CLEAR;
+        current_recovery_state = RECOVERY_IDLE;
       } else {
         // turn speed is set based on which cliff sensor is triggered, and the direction of the turn is determined by the sign of the turn_speed
         Kobuki_Rotate(turn_speed);
@@ -559,7 +581,7 @@ void Recovery_FSM() {
       break;
     }
 
-    case CLEAR:
+    case RECOVERY_CLEAR:
       // bumper recovery complete, resume the interrupted FSM
       break;
   }
@@ -671,9 +693,7 @@ void TIM3_IRQHandler(void) {
     if (current_state != IDLE && (kobuki.bumper & 0x05)) {
       // Right bumper: turn left; left bumper: turn right.
       turn_speed = (kobuki.bumper & 0x04) ? -100 : 100;
-      reverse_ticks = 10;  // 10(reverse ticks) x 20 ms at 100 mm/s backs up about 20 mm.
-      recovery_state = REVERSE;
-      Kobuki_Drive(-100);
+      recovery_start = true; // Start the recovery FSM
       return;
     }
 
@@ -686,26 +706,21 @@ void TIM3_IRQHandler(void) {
     //cliff recovery flags stores which sensors triggered 
     if (current_state != IDLE && current_state != STORAGE &&
         (cliff_recovery_flags ||
-         ((current_state != PATHFIND || recovery_state != CLEAR) &&
+         ((current_state != PATHFIND || current_recovery_state != RECOVERY_IDLE) &&
           (kobuki.cliff & 0x07)))) {
       // Prefer the requested sensor flags when a request is pending.
       turn_speed = Cliff_Correction_Speed(cliff_recovery_flags ? cliff_recovery_flags : kobuki.cliff);
       cliff_recovery_flags = 0; // Request has been handled.
 
-      // An active cliff restarts the reverse interval. After it clears,
-      // reverse for approximately another 20 mm before turning.
-      reverse_ticks = 10; // 10 ticks x 20 ms at 100 mm/s.
-      recovery_state = REVERSE;
-      Kobuki_Drive(-100);
+  
+      recovery_start = true; // An active cliff restarts the recovery FSM
       return;
     }
 
     //bumper recovery FSM
     //called first to ensure obstacle is cleared before resuming the interrupted FSM
-    if (recovery_state != CLEAR) {
-      Recovery_FSM();
-      return;
-    }
+    Recovery_FSM();
+  
     // main FSM
     main_FSM();
   }
