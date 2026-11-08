@@ -664,6 +664,7 @@ void TIM3_IRQHandler(void) {
     TIM3->SR &= ~(1 << 0);  // Clear update interrupt flag
     Kobuki_Read(&kobuki);
 
+    //Button 1 and Wheel drop Handling 
     // B1 pressed and wheel drop stops the robot and resets the FSMs to IDLE
     if ((kobuki.button & BUTTON_1_STOP) || kobuki.wheeldrop != 0) {
       Kobuki_Drive(STOP);
@@ -671,6 +672,8 @@ void TIM3_IRQHandler(void) {
       cliff_recovery_flags = 0;
       return;
     }
+
+    // Bumper Handling
     // if bumper pressed, set bumper recovery to reverse and turn away from the obstacle
     if (current_state != IDLE && (kobuki.bumper & 0x05)) {
       // Right bumper: turn left; left bumper: turn right.
@@ -679,6 +682,7 @@ void TIM3_IRQHandler(void) {
       return;
     }
 
+    //Cliff Sensor Handling
     // Skip general cliff recovery in IDLE and STORAGE.
     // PATHFIND initiates recovery through a request, preserving expected
     // centre endpoints and planned corner turns. 
@@ -694,7 +698,6 @@ void TIM3_IRQHandler(void) {
       turn_speed = Cliff_Correction_Speed(cliff_recovery_flags ? cliff_recovery_flags : kobuki.cliff);
       cliff_recovery_flags = 0; // Request has been handled.
 
-  
       recovery_start = true; // An active cliff restarts the recovery FSM
       return;
     }
