@@ -137,6 +137,7 @@ volatile Deposit_State_t current_deposit_state = DEPOSIT_IDLE;
 volatile Bumper_Recovery_State_t recovery_state = CLEAR;
 
 // State Flags
+volatile bool stop_flag = false;
 volatile bool search_complete = false;
 volatile bool pathfind_complete = false;
 volatile bool storage_complete = false;
@@ -578,6 +579,7 @@ void main_FSM() {
       pathfind_complete = false;
       storage_complete = false;
       deposit_complete = false;
+      stop_flag = false;
 
       if (kobuki.button & BUTTON_0_START) {
         // Start the search process when button 0 is pressed
@@ -585,6 +587,11 @@ void main_FSM() {
       }
       break;
     case SEARCH:
+      if (stop_flag) {
+        current_state = IDLE; // If button 1 or wheeldrop is triggered, return
+        // to idle to stop and reset system
+        break;
+      }
       if (search_complete) {
         current_state = PATHFIND;
         break;
@@ -592,6 +599,10 @@ void main_FSM() {
       Search_FSM();
       break;
     case PATHFIND:
+      if (stop_flag) {
+        current_state = IDLE;
+        break;
+      }
       if (pathfind_complete) {
         cliff_recovery_flags = 0;//clear cliff recovery flags to avoid triggering recovery in storage FSM
         current_state = STORAGE;
@@ -600,6 +611,10 @@ void main_FSM() {
       Pathfind_FSM();
       break;
     case STORAGE:
+      if (stop_flag) {
+        current_state = IDLE;
+        break;
+      }
       if (storage_complete) {
         current_state = DEPOSIT;
         break;
@@ -607,7 +622,7 @@ void main_FSM() {
       Storage_FSM();
       break;
     case DEPOSIT:
-      if (deposit_complete) {
+      if (deposit_complete || stop_flag) {
         current_state = IDLE;
         break;
       }
@@ -648,8 +663,7 @@ void TIM3_IRQHandler(void) {
     // B1 pressed and wheel drop stops the robot and resets the FSMs to IDLE
     if ((kobuki.button & BUTTON_1_STOP) || kobuki.wheeldrop != 0) {
       Kobuki_Drive(STOP);
-      current_state = IDLE;
-      recovery_state = CLEAR;
+      stop_flag = true; // stop_flag is set to set the main FSM to idle 
       cliff_recovery_flags = 0;
       return;
     }
