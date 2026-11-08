@@ -281,15 +281,6 @@ void Pathfind_FSM(void) {
       break;
 
     case PATHFIND_DRIVE:
-      // Establish clear ground before accepting a new segment endpoint.
-      // Do not include cliff_detected here: it would hide the centre endpoint.
-      if (clear_samples < PATHFIND_CLEAR_SAMPLES){
-        clear_samples = 0;
-        Kobuki_Drive(STOP);
-        current_pathfind_state = PATHFIND_CLEAR;
-        break;
-      }
-
       if ((kobuki.cliff & 0x02)) {//0x02, middle sensor
         Kobuki_Drive(STOP);
         if(first_segment){
