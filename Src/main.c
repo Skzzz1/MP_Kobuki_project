@@ -348,6 +348,7 @@ void Pathfind_FSM(void) {
 void Storage_FSM() {
   //number of samples to confirm clear detection
   static uint8_t storage_clear_samples = 0;
+  static int16_t turn;
 
   switch (current_storage_state) {
     case (STORAGE_IDLE):
@@ -366,20 +367,12 @@ void Storage_FSM() {
       Kobuki_Drive(STOP);
       if (++storage_clear_samples < PATHFIND_CLEAR_SAMPLES) break;//if not enough samples, keep checking
 
-      // Determine path
-      switch (path) {
-        case (PATH_A):
-          // rotate clockwise 135 deg,adjusted to 138 deg to account for overshoot
-          Kobuki_Rotate_Angle_Setpoint(kobuki.angle, -138);    // rotate CW 135 deg
-          break;
-
-        case (PATH_B):
-          current_storage_state = STORAGE_ORIENT;
-          // rotate anticlockwise 135 deg, adjusted to 133 deg to account for overshoot
-          Kobuki_Rotate_Angle_Setpoint(kobuki.angle, 133);       // rotate ACW 135 deg
-          break;
-      }
-
+      // Determine which path 
+      // Path A: rotate clockwise 135 deg,adjusted to 138 deg to account for overshoot
+      // Path B: rotate anticlockwise 135 deg, adjusted to 133 deg to account for overshoot
+      turn = (path == PATH_A) ? -138: 133;
+      Kobuki_Rotate_Angle_Setpoint(kobuki.angle, turn);
+      
       kobuki.rotation_complete = false;
       current_storage_state = STORAGE_ORIENT;
 
