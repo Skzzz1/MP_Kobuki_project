@@ -372,7 +372,7 @@ void Storage_FSM() {
       // Path B: rotate anticlockwise 135 deg, adjusted to 133 deg to account for overshoot
       turn = (path == PATH_A) ? -138: 133;
       Kobuki_Rotate_Angle_Setpoint(kobuki.angle, turn);
-      
+
       kobuki.rotation_complete = false;
       current_storage_state = STORAGE_ORIENT;
 
@@ -577,6 +577,7 @@ void main_FSM() {
       storage_complete = false;
       deposit_complete = false;
       stop_flag = false;
+      cliff_recovery_flags = 0;//hard reset cliff recovery flags
 
       if (kobuki.button & BUTTON_0_START) {
         // Start the search process when button 0 is pressed
@@ -601,7 +602,6 @@ void main_FSM() {
         break;
       }
       if (pathfind_complete) {
-        cliff_recovery_flags = 0;//clear cliff recovery flags to avoid triggering recovery in storage FSM
         current_state = STORAGE;
         break;
       }
