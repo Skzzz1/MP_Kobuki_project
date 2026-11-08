@@ -153,7 +153,6 @@ void Search_FSM(void) {
   switch (current_search_state) {
     case SEARCH_IDLE:
       // Initialize search variables
-      item_width = 0;
       bollard_distance = 0;
       Search_Reset(&scan);
       current_search_state = SEARCH_SCAN;
@@ -180,8 +179,6 @@ void Search_FSM(void) {
 
       // If the trailing edge is found, check if the width is valid and align to the midpoint of the object
       if(trailing_edge_found) {
-        // Calculate the width of the detected object in degrees
-        item_width = Search_Width_Degrees(&scan);
         // Check if the detected object's width is within the specified maximum width 
         // (this is to prevent false positives from detecting a wall or other large object)
         bool width_valid = Search_Width_Valid(&scan, ITEM_WIDTH_THRES);
@@ -194,9 +191,9 @@ void Search_FSM(void) {
           kobuki.rotation_complete = false;//mark align as not complete yet
           current_search_state = SEARCH_ALIGN_BOLLARD;
         } else {
-          // If the width is not valid, resume scanning for an object
-          Search_Resume_Scan(&scan);
-          current_search_state = SEARCH_SCAN;
+          // If the width is not valid, reset in idle and contiunue scanning 
+          // for an object
+          current_search_state = SEARCH_IDLE;
         }
         break;
       }
@@ -236,7 +233,8 @@ void Search_FSM(void) {
           break;
         }
       } 
-      current_search_state = SEARCH_IDLE;
+      current_search_state = SEARCH_IDLE; // If the distance is not valid,
+      // return to idle to reset the search variables and continue to scan 
       break;
 
     // Align to the bollard based on the determined path
@@ -459,7 +457,6 @@ void Deposit_FSM(void) {
       // If the trailing edge is found, check if the width is valid and align to the midpoint of the object
       bool trailing_edge_found = Search_Find_Trailing_Edge(&scan, object.detected, angle,SEARCH_CLEAR_CONFIRM_SAMPLES);
       if (trailing_edge_found) {
-        item_width = Search_Width_Degrees(&scan);
         bool width_valid = Search_Width_Valid(&scan, ITEM_WIDTH_THRES_DEPOSIT);
         if (width_valid) {
           // If the width is valid, align to the midpoint of the detected object
@@ -469,8 +466,9 @@ void Deposit_FSM(void) {
           current_deposit_state = DEPOSIT_ALIGN;
           break;
         }
-        Search_Resume_Scan(&scan);// else resume scanning for an object if width is not valid
-        current_deposit_state = DEPOSIT_SCAN;
+        current_deposit_state = DEPOSIT_IDLE; // If the width is not valid, 
+        // return to IDLE to reset scan variables, then continue to scan
+        break;
       }
       Kobuki_Rotate(SEARCH_SPEED);
       break;
@@ -488,7 +486,8 @@ void Deposit_FSM(void) {
       Deposit_Ultrasonic_Detect(&object);
       bollard_distance = object.range_mm;
       if ( !object.detected ||bollard_distance >= BOLLARD_CENTRE_MAX) {
-        // if detected object out of range, return to idle state
+        // if detected object out of range, return to idle state to reset
+        // scan variables, then continue to scan
         current_deposit_state = DEPOSIT_IDLE;
         break;
       }
