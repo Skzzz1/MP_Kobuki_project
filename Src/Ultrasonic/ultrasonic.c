@@ -1,3 +1,7 @@
+ //a1912114 - Qinyuan
+ //a1941993 - Will
+ //a1885489 - Brook 
+
 #include <stdint.h>
 #define STM32G474xx
 #include "adc.h"
